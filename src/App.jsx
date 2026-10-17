@@ -3,10 +3,13 @@ import SoftAurora from './components/background/SoftAurora.jsx'
 import AthenaDock from './components/navigation/AthenaDock.jsx'
 import AthenaDashboard from './components/dashboard/AthenaDashboard.jsx'
 import AthenaOnboarding from './components/onboarding/AthenaOnboarding.jsx'
+import AthenaProfile from './components/profile/AthenaProfile.jsx'
+import { createDemoProfile } from './components/profile/demoProfile.js'
 import './App.css'
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('Home')
+  const [profile, setProfile] = useState(createDemoProfile)
   const onboarding = new URLSearchParams(window.location.search).get('onboarding') === '1'
 
   return (
@@ -40,6 +43,8 @@ export default function App() {
         <AthenaOnboarding />
       ) : activeSection === 'Home' ? (
         <AthenaDashboard />
+      ) : activeSection === 'Settings' ? (
+        <AthenaProfile profile={profile} onSave={setProfile} />
       ) : (
         <main className="foundation-preview">
           <div>

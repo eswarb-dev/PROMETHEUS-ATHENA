@@ -1,6 +1,6 @@
 # PROMETHEUS // ATHENA
 
-Phase 04: optional new-user onboarding preview alongside the unchanged Home dashboard and compact navigation.
+Phase 05: Settings now opens a local profile preview, alongside the unchanged Home dashboard, compact navigation and optional onboarding preview.
 
 Run `npm install`, then `npm run dev`. Production build: `npm run build`.
 
@@ -28,4 +28,12 @@ Account, goal, skills and preferences use separate React state. Each step valida
 
 Onboarding checks covered account validation, visibility controls, custom direction/skill, self-reported levels, starting from scratch, all preferences, review, Back/indicators, completion, password-state clearing, no password in the profile, storage remaining empty, no submissions, dashboard return, responsive layouts and reduced-motion loading. Upstream ref lint warnings remain; no runtime console or WebGL errors were observed. No dependencies were added.
 
-Visual approval is required before the next phase. No backend authentication is implemented.
+Settings uses the actual [React Bits SpotlightCard](https://reactbits.dev/components/spotlight-card), with the upstream engine unchanged: dark theme, indigo light, intensity 0.10, size 260, softness 0.82, border glow 0.42, proximity 70 and smoothing 0.32. Ambient light and grain are disabled; flare remains enabled. A navy surface and restrained avatar gradient keep the existing midnight identity. The page reserves the same left navigation clearance as Home; the secondary learning snapshot is explicitly sample data.
+
+`src/components/profile/demoProfile.js` is the single temporary profile source, aligned with onboarding's account, goal, skills and preferences concepts. Local edits survive section switching but reset on reload. Email is read-only. Editing the name updates the avatar initial immediately; Cancel discards unsaved form edits. Skills remain self-reported. This page is not connected to onboarding or authenticated identity yet.
+
+`ProfileAvatar` shows a supplied image or only the first trimmed, uppercased name character, with `?` for missing names and a fallback on image errors. Photo selection accepts decodable PNG/JPEG/WEBP files under 5 MiB. Temporary Object URLs are separate from account.avatarUrl and are revoked on replacement, removal, rejected decode, cancelled pending selection or unmount. No files, Base64, storage writes or uploads are used by the application.
+
+Profile checks covered initials and live name edits, Cancel/Save, image formats/validation, Object URL lifecycle, navigation, narrow layouts, pointer spotlight/glow/flare, keyboard focus and reduced motion. Home and onboarding remain intact with one Aurora canvas and no observed runtime console/WebGL errors. No dependencies were added; upstream ref lint warnings remain.
+
+Visual approval is required before the next phase. No backend authentication or profile persistence is implemented.
