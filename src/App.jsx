@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import SoftAurora from './components/background/SoftAurora.jsx'
 import AthenaDock from './components/navigation/AthenaDock.jsx'
 import AthenaDashboard from './components/dashboard/AthenaDashboard.jsx'
@@ -7,6 +7,8 @@ import AthenaProfile from './components/profile/AthenaProfile.jsx'
 import { createDemoProfile } from './components/profile/demoProfile.js'
 import RoadmapPage from './components/roadmap/RoadmapPage.jsx'
 import './App.css'
+
+const TodayPage = lazy(() => import('./components/today/TodayPage.jsx'))
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('Home')
@@ -48,6 +50,8 @@ export default function App() {
         <AthenaProfile profile={profile} onSave={setProfile} />
       ) : activeSection === 'Roadmap' ? (
         <RoadmapPage />
+      ) : activeSection === 'Today' ? (
+        <Suspense fallback={<main className="foundation-preview" role="status">Loading today's plan…</main>}><TodayPage /></Suspense>
       ) : (
         <main className="foundation-preview">
           <div>

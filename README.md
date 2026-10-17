@@ -1,6 +1,6 @@
 # PROMETHEUS // ATHENA
 
-Phase 06: Roadmap consumes a backend-neutral API contract, alongside the unchanged Home dashboard, profile, compact navigation and onboarding preview.
+Phase 07: Today consumes a live study-plan contract alongside the unchanged Roadmap, Home, profile, navigation and onboarding preview.
 
 Run `npm install`, then `npm run dev`. Production build: `npm run build`.
 
@@ -55,4 +55,24 @@ Roadmaps require nonempty string `id` and `title`; optional `goal` is text, `pro
 
 Verification: build passes. Service contract tests covered missing configuration with zero fetches, empty responses, malformed data, duplicate IDs, HTTP failure and cancellation. Isolated browser tests used intercepted transport responses outside the application to exercise loading/empty/loaded/error/retry, selection, prerequisites, statuses, keyboard, reduced motion, desktop/tablet/mobile and 50 topics with one SpotlightCard. These are simulated transport checks, not proof of a deployed backend. The normal app currently shows data source unavailable. No test datasets or test server configuration are included in the application.
 
-Visual approval is required before the next phase. No backend authentication or persistence is implemented.
+Today uses actual React Bits [AnimatedList](https://reactbits.dev/components/animated-list), [SpringCheck](https://reactbits.dev/micro/spring-check) and [SpecularButton](https://reactbits.dev/components/specular-button). Example list data and the default checkbox label were removed. AnimatedList has an opt-in grid role for interactive rows so its native checkboxes remain accessible; its scrolling, reveal, selection and keyboard engine are retained. Rows show only returned task fields. Compact navy surfaces and one optional primary SpecularButton keep the productivity theme. Completed text stays readable. The Today bundle (including Motion) is lazy-loaded when the section opens.
+
+Today API contract, relative to the same VITE_API_BASE_URL:
+
+| Method | Path | Response / capability |
+| --- | --- | --- |
+| GET | /today | Plan object with date and tasks array |
+| PATCH | /tasks/:id/status | Accepts status; returns the persisted task. Requires capabilities.updateTask=true |
+| POST | /focus-sessions | Accepts taskId; returns active session. Requires capabilities.focusSessions=true |
+
+The plan may include timezone (valid IANA zone), plannedMinutes, completedMinutes, taskCount, completedTaskCount, activeSession and capabilities. Tasks require nonempty id/title and status planned/in_progress/completed/missed; optional fields include description, estimatedMinutes, actualMinutes, priority, topicId, topicTitle, roadmapId, scheduledFor, order and completedAt. scheduledFor, if present, must match the plan's YYYY-MM-DD date. IDs must be unique. Counts derive from actual returned task rows; durations use returned plan values, or sum complete estimates when every task has an estimate. No duration is inferred from missing data. A date-only plan date is formatted without a timezone shift; session instants use the returned timezone, falling back to Asia/Kolkata.
+
+Capabilities default to false even with an API URL. A backend must advertise a capability only when its documented endpoint is implemented and authorized. No task/session writes occur without it. Checkboxes are controlled and pessimistic: a task stays in its previous visible state until PATCH and a fresh GET confirm it. Only the pending task is disabled, duplicate writes are guarded, and reconciliation failures show an inline refresh action. No optimistic success is fabricated. Future shared-query invalidation can reuse the hook's refetch boundary; existing Home statistics are untouched.
+
+Focus sessions require server id/taskId/startedAt with an explicit timestamp offset. A confirmed response is reconciled with GET /today before display. Elapsed display derives from that server timestamp and current browser time; it does not persist or create session state. Conflicting active sessions suppress Start. No frontend-only timer/session or end-session endpoint is invented. SpecularButton uses its upstream WebGL shader with autoAnimate=false; at most one renders, alongside the single Aurora canvas.
+
+Today distinguishes loading, unavailable, empty, loaded, all-completed and retryable error states. No planning endpoint or planning action is assumed. Missing API configuration makes zero requests and shows zero tasks. Requests have a 15-second limit and abort on unmount; the StrictMode discarded mount makes no duplicate read. Read ordering prevents stale refetch responses from replacing newer data.
+
+Verification used external contract tests and intercepted browser transport, not a deployed backend: no-API/no-fetch, skeleton, empty, exact task rows/statuses, date formatting, arrows/Home/End/Enter, Space checkbox activation, write success/refetch, pending isolation, duplicate-write prevention, failure preserving visible status, focus failure/success, active-session elapsed display, disabled capabilities, completed day, reduced motion and responsive desktop/tablet/mobile. Home/Roadmap/Profile/Onboarding and Aurora/Dock were checked. No test task dataset or configured test API is included in the app. Motion was the only new dependency. Build passes; upstream ref lint warnings remain separate from runtime verification.
+
+Visual approval is required before the next phase. No backend, authentication, task generation or persistence has been implemented.
