@@ -5,6 +5,7 @@ import AthenaDashboard from './components/dashboard/AthenaDashboard.jsx'
 import AthenaOnboarding from './components/onboarding/AthenaOnboarding.jsx'
 import AthenaProfile from './components/profile/AthenaProfile.jsx'
 import { createDemoProfile } from './components/profile/demoProfile.js'
+import RoadmapPage from './components/roadmap/RoadmapPage.jsx'
 import './App.css'
 
 export default function App() {
@@ -45,6 +46,8 @@ export default function App() {
         <AthenaDashboard />
       ) : activeSection === 'Settings' ? (
         <AthenaProfile profile={profile} onSave={setProfile} />
+      ) : activeSection === 'Roadmap' ? (
+        <RoadmapPage />
       ) : (
         <main className="foundation-preview">
           <div>

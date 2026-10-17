@@ -1,6 +1,6 @@
 # PROMETHEUS // ATHENA
 
-Phase 05: Settings now opens a local profile preview, alongside the unchanged Home dashboard, compact navigation and optional onboarding preview.
+Phase 06: Roadmap consumes a backend-neutral API contract, alongside the unchanged Home dashboard, profile, compact navigation and onboarding preview.
 
 Run `npm install`, then `npm run dev`. Production build: `npm run build`.
 
@@ -36,4 +36,23 @@ Settings uses the actual [React Bits SpotlightCard](https://reactbits.dev/compon
 
 Profile checks covered initials and live name edits, Cancel/Save, image formats/validation, Object URL lifecycle, navigation, narrow layouts, pointer spotlight/glow/flare, keyboard focus and reduced motion. Home and onboarding remain intact with one Aurora canvas and no observed runtime console/WebGL errors. No dependencies were added; upstream ref lint warnings remain.
 
-Visual approval is required before the next phase. No backend authentication or profile persistence is implemented.
+Roadmap uses the existing SpotlightCard for one selected-topic panel, actual React Bits [AnimatedContent](https://reactbits.dev/animations/animated-content) for group reveals, and [BranchedMenu](https://reactbits.dev/c/micro/branched-menu) for structure navigation. Its example menu data was removed; a controlled selection prop keeps prerequisites and flow selections aligned with the navigator. The branch drawing/folding engine remains intact. Status labels, icons and colors share `roadmapStatus.js`. The flow uses lightweight cards regardless of topic count, preventing per-topic spotlight engines. Indigo selection and subtle CSS connectors make navigation clear without a canvas graph.
+
+Roadmap API contract:
+
+| Method | Path relative to VITE_API_BASE_URL | Response |
+| --- | --- | --- |
+| GET | /roadmaps/active | Roadmap object; null, 204 or 404 means no active roadmap |
+| GET | /roadmaps/:id/sections | Array of sections |
+| GET | /roadmaps/:id/topics | Array of topics |
+| GET | /topics/:id | One topic (available service method) |
+
+Set the public `VITE_API_BASE_URL` in your local Vite environment and restart the dev server. It may be an HTTP(S) base URL or a same-origin relative path. Leave it empty to show the unavailable state without fetching. Never put secrets in VITE variables. No backend/vendor, authentication scheme or write endpoint is assumed. Cross-origin backends must support the frontend origin through CORS. No status mutation controls are exposed.
+
+Roadmaps require nonempty string `id` and `title`; optional `goal` is text, `progressPercent` is 0–100, and `estimatedRemainingMinutes` is nonnegative minutes. Sections require `id`, `roadmapId` and `title`; optional `order` determines sorting. Topics require `id`, `sectionId`, `title` and one status: completed/current/planned/suggested/gap. Optional fields: description, order, nonnegative estimatedMinutes, selfReportedLevel, verifiedLevel, confidenceScore (0–1), prerequisiteTopicIds (string array), suggestedByAthena (boolean). IDs must be unique; sections must belong to the active roadmap, and topics to returned sections. Invalid data fails closed to the error state. Unresolved prerequisite IDs display Unknown prerequisite. Explicit null verifiedLevel displays Not tested; omitted fields stay omitted. Completion counts derive only from returned topics; no time estimates are inferred.
+
+`roadmapService.js` validates responses and limits requests to 15 seconds. `useRoadmap` aborts on unmount, cancels sibling requests on failure and avoids StrictMode's discarded initial fetch. Summary/navigation/section animation groups use GSAP contexts with upstream cleanup. Loading, unavailable, empty, loaded and retryable error states are distinct. No sample topics, fallback dataset, speculative generation or successful local writes exist in this page. Existing sample Home/Profile content is separate and unchanged.
+
+Verification: build passes. Service contract tests covered missing configuration with zero fetches, empty responses, malformed data, duplicate IDs, HTTP failure and cancellation. Isolated browser tests used intercepted transport responses outside the application to exercise loading/empty/loaded/error/retry, selection, prerequisites, statuses, keyboard, reduced motion, desktop/tablet/mobile and 50 topics with one SpotlightCard. These are simulated transport checks, not proof of a deployed backend. The normal app currently shows data source unavailable. No test datasets or test server configuration are included in the application.
+
+Visual approval is required before the next phase. No backend authentication or persistence is implemented.
