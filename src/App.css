@@ -1,0 +1,44 @@
+.athena-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.foundation-preview {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 2rem 1.25rem;
+  padding-left: 7rem;
+  text-align: center;
+}
+
+.athena-navigation {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.athena-dock.dock--left {
+  left: 18px;
+  pointer-events: auto;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.foundation-preview h1 {
+  margin: 0;
+  font-size: clamp(1rem, 3.5vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.foundation-preview p {
+  margin: 0.65rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
