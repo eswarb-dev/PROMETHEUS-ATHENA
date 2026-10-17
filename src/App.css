@@ -29,6 +29,12 @@
   backdrop-filter: blur(20px);
 }
 
+.athena-dock .dock-label {
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 7px;
+}
+
 .foundation-preview h1 {
   margin: 0;
   font-size: clamp(1rem, 3.5vw, 1.5rem);

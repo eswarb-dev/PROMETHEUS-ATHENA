@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SoftAurora from './components/background/SoftAurora.jsx'
 import AthenaDock from './components/navigation/AthenaDock.jsx'
+import AthenaDashboard from './components/dashboard/AthenaDashboard.jsx'
 import './App.css'
 
 export default function App() {
@@ -33,12 +34,16 @@ export default function App() {
         />
       </div>
       <AthenaDock activeSection={activeSection} onSelect={setActiveSection} />
-      <main className="foundation-preview">
-        <div>
-          <h1>PROMETHEUS // ATHENA</h1>
-          <p aria-live="polite" aria-atomic="true">{activeSection}</p>
-        </div>
-      </main>
+      {activeSection === 'Home' ? (
+        <AthenaDashboard />
+      ) : (
+        <main className="foundation-preview">
+          <div>
+            <h1>PROMETHEUS // ATHENA</h1>
+            <p aria-live="polite" aria-atomic="true">{activeSection}</p>
+          </div>
+        </main>
+      )}
     </>
   )
 }

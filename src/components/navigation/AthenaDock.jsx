@@ -35,11 +35,11 @@ export default function AthenaDock({ activeSection, onSelect }) {
         items={items}
         position="left"
         theme="dark"
-        baseItemSize={46}
-        magnification={62}
-        distance={150}
-        panelHeight={62}
-        gap={8}
+        baseItemSize={40}
+        magnification={50}
+        distance={110}
+        panelHeight={54}
+        gap={6}
         roundness={0.7}
         bounce={true}
         autoHide={false}
