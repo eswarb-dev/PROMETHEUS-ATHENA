@@ -1,0 +1,56 @@
+.athena-onboarding { min-height: 100svh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 36px 16px; color: #f5f7ff; }
+.onboarding-header { text-align: center; margin-bottom: 24px; }
+.onboarding-header > p:first-child { font-size: 12px; margin: 0 0 16px; }
+.onboarding-header h1 { font-size: 30px; font-weight: 550; letter-spacing: -0.6px; margin: 0 0 8px; }
+.onboarding-header p { margin: 0 0 10px; color: #b7c0db; font-size: 15px; }
+.onboarding-header small { color: #b7c0db; font-size: 12px; }
+.athena-stepper .stepper__step { padding: 10px 8px; }
+.onboarding-step-heading { margin-bottom: 24px; }
+.onboarding-step-heading h2, .onboarding-complete h2 { margin: 0 0 8px; font-size: 24px; font-weight: 550; letter-spacing: -0.4px; }
+.onboarding-step-heading p, .onboarding-complete p { margin: 0; color: #b7c0db; font-size: 14px; line-height: 1.6; }
+.onboarding-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.onboarding-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; margin-bottom: 18px; }
+.onboarding-fields .onboarding-field { margin-bottom: 0; }
+.onboarding-field label, .onboarding-choices legend { font-size: 13px; color: #e2e7f8; }
+.onboarding-field input, .onboarding-field textarea, .onboarding-field select { width: 100%; min-width: 0; padding: 12px 13px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); border-radius: 11px; color: #f5f7ff; font: inherit; font-size: 14px; line-height: 1.4; }
+.onboarding-field select option { background: #10182b; }
+.onboarding-field textarea { resize: vertical; min-height: 85px; }
+.onboarding-field input::placeholder, .onboarding-field textarea::placeholder { color: #9ea8c7; }
+.onboarding-field small { color: #b7c0db; font-size: 12px; }
+.onboarding-input-wrap { position: relative; }
+.onboarding-input-wrap:has(.password-toggle) input { padding-right: 65px; }
+.password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: #d9d4ff; cursor: pointer; font: inherit; font-size: 12px; }
+.athena-onboarding :is(input, textarea, select, button, a):focus-visible { outline: 2px solid #9e91ff; outline-offset: 3px; }
+.onboarding-field :is(input, textarea, select):focus-visible { border-color: #7c6cff; outline-offset: 1px; }
+.onboarding-field .onboarding-error { color: #ffbe55; }
+.onboarding-choices { border: 0; margin: 0 0 22px; padding: 0; min-width: 0; }
+.onboarding-choices legend { margin-bottom: 10px; }
+.onboarding-choice-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.onboarding-choice { position: relative; display: flex; cursor: pointer; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.onboarding-choice input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.onboarding-choice span { display: block; padding: 10px 13px; border: 1px solid rgba(255,255,255,0.13); border-radius: 10px; color: #b7c0db; font-size: 13px; line-height: 1.3; }
+.onboarding-choice input:checked + span { border-color: #7c6cff; background: rgba(124,108,255,0.13); color: #f5f7ff; }
+.onboarding-choice input:focus-visible + span { outline: 2px solid #9e91ff; outline-offset: 3px; }
+.onboarding-custom-skill { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 20px; }
+.onboarding-custom-skill .onboarding-field { flex: 1; margin: 0; }
+.onboarding-secondary { padding: 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; background: rgba(255,255,255,0.04); color: #f5f7ff; font: inherit; font-size: 13px; cursor: pointer; }
+.athena-onboarding button:disabled { cursor: default; }
+.onboarding-secondary:disabled { opacity: 0.45; }
+.onboarding-skill-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.onboarding-scratch { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 14px; color: #e2e7f8; }
+.onboarding-scratch input { accent-color: #7c6cff; width: 18px; height: 18px; }
+.onboarding-help { font-size: 12px; color: #b7c0db; line-height: 1.6; margin: 12px 0 0; }
+.onboarding-review { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 26px; }
+.onboarding-review dt { color: #b7c0db; font-size: 12px; margin-bottom: 5px; }
+.onboarding-review dd { margin: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.onboarding-complete { padding: 28px 12px; }
+.onboarding-complete .onboarding-success { color: #49d7a5; font-size: 13px; margin-bottom: 12px; }
+.onboarding-dashboard-link { display: inline-block; margin-top: 24px; padding: 12px 18px; border-radius: 10px; background: #7c6cff; color: #080d1a; text-decoration: none; font-size: 14px; font-weight: 600; }
+@media (max-width: 560px) {
+  .athena-onboarding { padding-block: 24px; justify-content: flex-start; }
+  .onboarding-fields, .onboarding-skill-levels, .onboarding-review { grid-template-columns: minmax(0, 1fr); }
+  .onboarding-step-heading h2, .onboarding-complete h2 { font-size: 21px; }
+  .onboarding-custom-skill { align-items: stretch; flex-direction: column; }
+  .onboarding-choice span { padding: 9px 10px; font-size: 12px; }
+  .athena-stepper .stepper__step { padding: 10px 0; }
+}

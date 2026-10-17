@@ -2,10 +2,12 @@ import { useState } from 'react'
 import SoftAurora from './components/background/SoftAurora.jsx'
 import AthenaDock from './components/navigation/AthenaDock.jsx'
 import AthenaDashboard from './components/dashboard/AthenaDashboard.jsx'
+import AthenaOnboarding from './components/onboarding/AthenaOnboarding.jsx'
 import './App.css'
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('Home')
+  const onboarding = new URLSearchParams(window.location.search).get('onboarding') === '1'
 
   return (
     <>
@@ -33,8 +35,10 @@ export default function App() {
           opacity={0.9}
         />
       </div>
-      <AthenaDock activeSection={activeSection} onSelect={setActiveSection} />
-      {activeSection === 'Home' ? (
+      {!onboarding && <AthenaDock activeSection={activeSection} onSelect={setActiveSection} />}
+      {onboarding ? (
+        <AthenaOnboarding />
+      ) : activeSection === 'Home' ? (
         <AthenaDashboard />
       ) : (
         <main className="foundation-preview">

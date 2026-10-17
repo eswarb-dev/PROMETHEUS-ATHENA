@@ -1,6 +1,6 @@
 # PROMETHEUS // ATHENA
 
-Phase 03: Home dashboard using React Bits MagicBento, with compact left navigation over the Phase 01 SoftAurora background.
+Phase 04: optional new-user onboarding preview alongside the unchanged Home dashboard and compact navigation.
 
 Run `npm install`, then `npm run dev`. Production build: `npm run build`.
 
@@ -22,4 +22,10 @@ Design direction: ENERGY 1 / RHYTHM 1 / MOTION 2. Restrained magnification aids 
 
 Verification: production build passes; local Chrome checked desktop/tablet/mobile, short landscape, selection, glow, spotlight, click wave, scrolling, reduced motion, one canvas and no runtime console errors. A two-second headless idle sample recorded no Dock/Bento animation callbacks after settling; Aurora remained animated. Upstream React ref lint warnings remain distinct from runtime results.
 
-Visual approval is required before the next phase.
+Onboarding preview: open `http://127.0.0.1:5173/?onboarding=1`. The normal `/` URL still opens Home. The Dock is hidden only during onboarding; the same Aurora stays mounted. The actual [React Bits Stepper](https://reactbits.dev/components/stepper) supplies numbered horizontal indicators, slide transitions, animated height and responsive tight mode. Five steps collect Account, Direction, Skills, Study Style and Review. The 800px navy frame keeps the setup focused; indigo ties selection to the existing navigation palette. Controls use system typography and visible focus. The sole local Stepper adjustment makes the outgoing animation panel inert so hidden inputs cannot receive focus.
+
+Account, goal, skills and preferences use separate React state. Each step validates before Continue is enabled, and previously visited indicators cannot bypass invalid earlier fields. Skills use selfReportedLevel with verifiedLevel/confidenceScore unset. Reminders are preference data only. Completion creates a temporary profile without passwords and clears both password state fields. No storage, cookies, auth service or backend is used; reloading resets setup. Open Dashboard returns to `/` and discards the temporary state.
+
+Onboarding checks covered account validation, visibility controls, custom direction/skill, self-reported levels, starting from scratch, all preferences, review, Back/indicators, completion, password-state clearing, no password in the profile, storage remaining empty, no submissions, dashboard return, responsive layouts and reduced-motion loading. Upstream ref lint warnings remain; no runtime console or WebGL errors were observed. No dependencies were added.
+
+Visual approval is required before the next phase. No backend authentication is implemented.
