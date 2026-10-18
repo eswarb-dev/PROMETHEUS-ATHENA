@@ -15,7 +15,7 @@ select jsonb_build_object(
      has_function_privilege('anon',p.oid,'execute') as anon_execute,
      has_function_privilege('authenticated',p.oid,'execute') as authenticated_execute
    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-   where n.nspname='public' and (p.proname like 'get_%_snapshot' or p.proname in ('set_task_status','start_focus_session','project_keepalive'))
+   where n.nspname='public' and (p.proname like 'get_%_snapshot' or p.proname in ('set_task_status','start_focus_session','project_keepalive','get_auth_profile','complete_onboarding'))
    order by p.proname
  ) metadata),
  'keepalive',public.project_keepalive()

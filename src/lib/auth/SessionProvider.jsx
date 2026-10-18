@@ -3,6 +3,7 @@ import { SessionContext } from './sessionContext.js'
 import { supabase } from '../supabase/client.js'
 import { queryClient } from '../query/queryClient.js'
 import { sessionIdentity } from './sessionIdentity.js'
+import { recoveryOwner, rememberRecovery } from '../../auth/recoveryState.js'
 export function SessionProvider({ children }) {
   const [state, setState] = useState({ resolved: !supabase, session: null, authEvent: null, recovery: false })
   useEffect(() => {
@@ -13,13 +14,16 @@ export function SessionProvider({ children }) {
     const apply = (session, event = 'INITIAL_SESSION') => {
       if (!active) return
       const nextId = session?.user?.id ?? null
+      if (event === 'PASSWORD_RECOVERY' && nextId) rememberRecovery(nextId)
+      else if (recoveryOwner() !== nextId) rememberRecovery(null)
+      const restoredRecovery = !!nextId && recoveryOwner() === nextId
       sessionIdentity.change(nextId)
       if (currentId !== nextId) {
         void queryClient.cancelQueries()
         queryClient.clear()
         currentId = nextId
       }
-      setState(previous => ({ resolved: true, session, authEvent: event, recovery: !!session && (event === 'PASSWORD_RECOVERY' || previous.recovery && previous.session?.user?.id === nextId) }))
+      setState(previous => ({ resolved: true, session, authEvent: event, recovery: !!session && (restoredRecovery || event === 'PASSWORD_RECOVERY' || previous.recovery && previous.session?.user?.id === nextId) }))
     }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => { version++; apply(session, event) })
     const initialVersion = version
@@ -29,6 +33,7 @@ export function SessionProvider({ children }) {
     return () => { active = false; subscription.unsubscribe() }
   }, [])
   const finishRecovery = () => {
+    rememberRecovery(null)
     history.replaceState(null, '', location.pathname)
     setState(previous => ({ ...previous, recovery: false }))
   }

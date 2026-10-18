@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createAuthService } from '../src/services/authService.js'
 import { authErrorMessage } from '../src/auth/authErrors.js'
 import { recoveryUrl, initialAuthView, maskEmail, otpLength } from '../src/auth/authConfig.js'
+import { recoveryOwner, rememberRecovery } from '../src/auth/recoveryState.js'
 
 test('auth service calls only Supabase Auth with scoped payloads and confirmed sessions', async () => {
   const calls = []
@@ -39,4 +40,13 @@ test('auth errors and URL handling expose no internal detail or arbitrary destin
   assert.equal(initialAuthView('?auth=https://untrusted.invalid'), 'login')
   assert.equal(initialAuthView('?auth=verify&email=private@example.invalid'), 'login')
   assert.equal(maskEmail('owner@example.invalid'), 'ow***@example.invalid')
+  const markers = new Map()
+  const storage = { getItem: key => markers.get(key), setItem: (key,value) => markers.set(key,value), removeItem: key => markers.delete(key) }
+  rememberRecovery('owner-id', storage)
+  assert.equal(recoveryOwner(storage), 'owner-id')
+  rememberRecovery(null, storage)
+  assert.equal(recoveryOwner(storage), null)
+  const blocked = { getItem: () => { throw Error() }, removeItem: () => { throw Error() } }
+  assert.equal(recoveryOwner(blocked), null)
+  assert.doesNotThrow(() => rememberRecovery(null, blocked))
 })
