@@ -1,0 +1,13 @@
+create index roadmaps_owner_status on public.roadmaps(user_id,status,updated_at desc);
+create index sections_roadmap_order on public.roadmap_sections(roadmap_id,sort_order);
+create index topics_roadmap_order on public.roadmap_topics(roadmap_id,sort_order);
+create index topics_section on public.roadmap_topics(section_id);
+create index prerequisite_target on public.topic_prerequisites(prerequisite_topic_id);
+create index tasks_owner_date_status on public.daily_tasks(user_id,scheduled_for,status);
+create index tasks_topic on public.daily_tasks(topic_id);
+create index sessions_owner_started on public.study_sessions(user_id,started_at desc);
+create index sessions_task on public.study_sessions(task_id);
+create index knowledge_owner_state on public.knowledge_topics(user_id,knowledge_state);
+create index knowledge_topic on public.knowledge_topics(roadmap_topic_id);
+create index conversations_owner_updated on public.athena_conversations(user_id,updated_at desc);
+create index messages_conversation_created on public.athena_messages(conversation_id,created_at desc,id);
