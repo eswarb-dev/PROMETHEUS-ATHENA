@@ -1,0 +1,3 @@
+export default function ProgressEmptyState({ status, onRetry }) {
+  return <section className="progress-state" role="status"><h2>{status === 'unavailable' ? 'Live progress analytics are not connected yet.' : status === 'error' ? "Couldn't load your progress." : 'No progress data yet'}</h2><p>{status === 'unavailable' ? 'Connect the ATHENA backend to track study time, task completion, consistency and learning growth.' : status === 'error' ? 'Try again to load your learning analytics.' : 'Your analytics will appear after you begin completing study tasks and learning sessions.'}</p>{status === 'error' && <button type="button" className="progress-button" onClick={onRetry}>Retry</button>}</section>
+}

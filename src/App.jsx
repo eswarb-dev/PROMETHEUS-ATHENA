@@ -11,6 +11,7 @@ import './App.css'
 const TodayPage = lazy(() => import('./components/today/TodayPage.jsx'))
 const KnowledgePage = lazy(() => import('./components/knowledge/KnowledgePage.jsx'))
 const AthenaPage = lazy(() => import('./components/athena/AthenaPage.jsx'))
+const ProgressPage = lazy(() => import('./components/progress/ProgressPage.jsx'))
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('Home')
@@ -58,6 +59,8 @@ export default function App() {
         <Suspense fallback={<main className="foundation-preview" role="status">Loading knowledge profile…</main>}><KnowledgePage /></Suspense>
       ) : activeSection === 'ATHENA' ? (
         <Suspense fallback={<main className="foundation-preview" role="status">Loading ATHENA…</main>}><AthenaPage /></Suspense>
+      ) : activeSection === 'Progress' ? (
+        <Suspense fallback={<main className="foundation-preview" role="status">Loading progress analytics…</main>}><ProgressPage /></Suspense>
       ) : (
         <main className="foundation-preview">
           <div>
