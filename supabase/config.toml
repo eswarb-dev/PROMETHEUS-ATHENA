@@ -25,9 +25,23 @@ otp_length = 8
 max_frequency = "1m"
 
 [auth.email.template.confirmation]
-subject = "Verify your ATHENA email"
+subject = "Your ATHENA verification code"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
 subject = "Reset your ATHENA password"
 content_path = "./supabase/templates/recovery.html"
+
+[functions.send-welcome-email]
+# The handler validates the bearer token with Auth getUser before any mail operation.
+verify_jwt = false
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your ATHENA password changed"
+content_path = "./supabase/templates/password-changed.html"
+
+[auth.email.notification.email_changed]
+enabled = true
+subject = "Your ATHENA email changed"
+content_path = "./supabase/templates/email-changed.html"
