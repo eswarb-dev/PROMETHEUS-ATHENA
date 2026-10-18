@@ -1,0 +1,58 @@
+.athena-chat-page { width: calc(100% - 180px); margin-left: 130px; padding: 46px 0 30px; color: #f5f7ff; }
+.athena-chat-header { margin-bottom: 24px; }
+.athena-chat-header p { color: #b7c0db; font-size: 15px; margin: 0 0 10px; }
+.athena-chat-header p:first-child { font-size: 12px; margin-bottom: 18px; }
+.athena-chat-header h1 { margin: 0 0 8px; font-size: 32px; font-weight: 550; letter-spacing: -.6px; }
+.athena-chat-header .status-mark { margin-top: 8px; }
+.athena-chat-header .status-mark__label { opacity: 1; }
+.athena-chat-header .status-mark[data-status='cancelled'] { color: #b7c0db; }
+.athena-chat-state { max-width: 800px; padding: 32px; border: 1px solid #ffffff14; border-radius: 20px; background: rgba(12,18,35,.82); }
+.athena-chat-state h2, .athena-chat-empty h2 { font-size: 25px; line-height: 1.4; font-weight: 500; margin: 0 0 12px; }
+.athena-chat-state p, .athena-chat-empty p, .athena-chat-empty li { color: #b7c0db; font-size: 14px; line-height: 1.8; }
+.athena-chat-workspace { max-width: 960px; margin: 0 auto; min-width: 0; }
+.athena-conversation-wrap { position: relative; }
+.athena-conversation { height: max(240px, calc(100svh - 400px)); min-height: 240px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 26px; background: rgba(8,13,26,.55); border: 1px solid #ffffff14; border-radius: 20px; }
+.athena-chat-empty { max-width: 600px; padding: 14px 0; }
+.athena-chat-eyebrow { color: #b7c0db; font-size: 12px !important; margin: 0 0 20px; }
+.athena-chat-empty ul { padding-left: 20px; }
+.athena-message { padding: 22px 0; min-width: 0; overflow-wrap: anywhere; }
+.athena-message + .athena-message { border-top: 1px solid #ffffff12; }
+.athena-message--user { background: #12182bcc; padding: 18px 22px; border-radius: 14px; margin: 0 0 14px auto; max-width: 85%; }
+.athena-message-author { font-size: 12px; color: #b7c0db; font-weight: 600; margin: 0 0 15px; }
+.athena-message-body { font-size: 15px; line-height: 1.8; }
+.athena-message-body p { margin: 0 0 12px; white-space: pre-wrap; }
+.athena-message-body h2,.athena-message-body h3,.athena-message-body h4 { font-size: 19px; font-weight: 550; margin: 16px 0 8px; }
+.athena-message-body ul,.athena-message-body ol { padding-left: 24px; }
+.athena-message-body pre { max-width: 100%; overflow: auto; background: #080d1a; padding: 16px; border-radius: 10px; white-space: pre; font-size: 13px; }
+.athena-message-body :not(pre) > code { background: #ffffff0d; padding: 2px 5px; border-radius: 4px; font-size: .9em; }
+.athena-chat-composer { position: sticky; bottom: 18px; z-index: 3; display: flex; justify-content: center; padding-top: 12px; }
+.athena-chat-composer .prompt-bar { max-width: 100%; min-width: 0; }
+.athena-chat-composer .prompt-bar__tool { color: #b7c0db; }
+.athena-chat-composer .prompt-bar__input::placeholder { color: #b7c0db; opacity: 1; }
+.athena-chat-notice { color: #ffbe55; font-size: 13px; line-height: 1.6; padding: 12px 0 0; }
+.athena-chat-notice:empty { padding: 0; }
+.athena-chat-button { border: 1px solid #7c6cff; background: #12182b; color: #f5f7ff; border-radius: 9px; padding: 10px 16px; cursor: pointer; font: inherit; font-size: 13px; }
+.athena-jump { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 4px 16px #080d1a; }
+.athena-call-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; min-width: 0; }
+.athena-call-list .call-chip { max-width: 100%; }
+.athena-past-call { color: #b7c0db; font-size: 12px; background: #12182b; padding: 7px 9px; border-radius: 7px; }
+.athena-past-progress { color: #b7c0db; font-size: 13px; margin-bottom: 15px; }
+.athena-past-progress summary { cursor: pointer; }
+.athena-message-outcome { color: #ffbe55; font-size: 13px; }
+.athena-message .thought-line { --tl-done: 1; --tl-timer: 1; max-width: 100%; margin-bottom: 16px; }
+.athena-message .thought-line__head { max-width: 100%; }
+.athena-message .thought-line__step[data-done] .thought-line__step-text { opacity: 1; }
+.athena-message .thought-line__steps { width: auto; max-width: 100%; white-space: normal; }
+.athena-message .thought-line__breath { opacity: 1 !important; }
+.athena-message .thought-line[data-working] .thought-line__breath[data-shimmer] { background-image: linear-gradient(100deg, #b7c0db 30%, #f5f7ff 50%, #b7c0db 70%); }
+.athena-message .call-chip__timer { opacity: .8; }
+.athena-chat-page :is(button,textarea,[tabindex]):focus-visible { outline: 2px solid #b5acff; outline-offset: 4px; }
+.athena-chat-skeleton { max-width: 960px; display: grid; gap: 24px; padding: 28px; border-radius: 20px; background: #0c1223d1; }
+.athena-chat-skeleton span { height: 24px; width: 55%; background: #ffffff0b; border-radius: 8px; }
+.athena-chat-skeleton span:nth-child(2) { height: 110px; width: 85%; }
+.athena-chat-skeleton span:nth-child(3) { height: 150px; width: 100%; }
+.athena-chat-skeleton span:last-child { height: 80px; width: 90%; }
+@media (min-width: 1800px) { .athena-chat-page { max-width: 1500px; } }
+@media (max-width: 700px) { .athena-chat-page { width: calc(100% - 116px); margin-left: 100px; padding-top: 30px; } .athena-chat-header h1 { font-size: 28px; } .athena-chat-state { padding: 22px; } .athena-conversation { padding: 16px; } .athena-message--user { max-width: 100%; padding: 15px; } .athena-chat-composer { bottom: 10px; } .athena-chat-composer .prompt-bar__surface { padding: 12px; } .athena-message .thought-line__head { flex-wrap: wrap; } .athena-message .thought-line__label { min-width: 0; max-width: 100%; } .athena-message .thought-line__text { white-space: normal; } }
+@media (prefers-reduced-motion: reduce) { .athena-chat-page *, .athena-chat-page *::before, .athena-chat-page *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+@media (max-width: 700px) { .athena-message .thought-line__text { width: auto; max-width: 100%; } .athena-message .thought-line__timer { transform: none !important; } }
