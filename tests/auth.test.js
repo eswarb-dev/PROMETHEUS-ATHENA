@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createAuthService } from '../src/services/authService.js'
-import { authErrorMessage } from '../src/auth/authErrors.js'
+import { authErrorMessage, authErrorCategory } from '../src/auth/authErrors.js'
 import { recoveryUrl, initialAuthView, maskEmail, otpLength } from '../src/auth/authConfig.js'
 import { recoveryOwner, rememberRecovery } from '../src/auth/recoveryState.js'
 
@@ -29,6 +29,16 @@ test('auth service calls only Supabase Auth with scoped payloads and confirmed s
   client.auth.verifyOtp = async () => ({ data: {}, error: { code: 'otp_expired' } })
   await assert.rejects(service.verifySignupOtp({ email: 'owner@example.invalid', token: '1'.repeat(otpLength) }), { code: 'otp_expired' })
 })
+test('auth distinguishes operational failures without exposing provider detail', () => {
+  assert.equal(authErrorCategory({ name: 'AuthRetryableFetchError', status: 500 }), 'AUTH_PROVIDER_ERROR')
+  assert.equal(authErrorCategory({ name: 'AuthRetryableFetchError', status: 500, message: 'Error sending confirmation email' }), 'AUTH_MAIL_DELIVERY_ERROR')
+  assert.equal(authErrorCategory(new TypeError('fetch failed')), 'AUTH_NETWORK_ERROR')
+  assert.equal(authErrorCategory({ status: 429 }), 'AUTH_RATE_LIMITED')
+  assert.equal(authErrorCategory({ code: 'email_address_not_authorized' }), 'AUTH_EMAIL_UNAUTHORIZED')
+  assert.equal(authErrorCategory({ status: 422 }), 'AUTH_INVALID_REQUEST')
+  assert.ok(!authErrorMessage({ name: 'AuthRetryableFetchError', status: 500 }).includes('connection'))
+})
+
 test('auth errors and URL handling expose no internal detail or arbitrary destination', () => {
   assert.equal(authErrorMessage({ code: 'invalid_credentials', message: 'private internal detail' }), 'Email or password is incorrect.')
   assert.equal(authErrorMessage({ status: 429 }), 'Too many attempts. Try again shortly.')
