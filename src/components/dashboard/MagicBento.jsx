@@ -74,20 +74,7 @@ const STAGGER = 80;
 const TILT = 6;
 const MAGNET = 6;
 
-const DEFAULT_ITEMS = [
-  { title: 'Analytics', description: 'Track user behavior', visual: 'analytics' },
-  { title: 'Dashboard', description: 'Centralized data view', visual: 'dashboard' },
-  {
-    title: 'Collaboration',
-    description: 'Work together seamlessly',
-    visual: 'collaboration',
-    colSpan: 2,
-    rowSpan: 2
-  },
-  { title: 'Automation', description: 'Streamline workflows', visual: 'automation', colSpan: 2, rowSpan: 2 },
-  { title: 'Integration', description: 'Connect favorite tools', visual: 'integration' },
-  { title: 'Security', description: 'Enterprise-grade protection', visual: 'security' }
-];
+const DEFAULT_ITEMS = [];
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
