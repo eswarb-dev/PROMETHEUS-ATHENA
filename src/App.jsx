@@ -9,6 +9,7 @@ import RoadmapPage from './components/roadmap/RoadmapPage.jsx'
 import './App.css'
 
 const TodayPage = lazy(() => import('./components/today/TodayPage.jsx'))
+const KnowledgePage = lazy(() => import('./components/knowledge/KnowledgePage.jsx'))
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('Home')
@@ -52,6 +53,8 @@ export default function App() {
         <RoadmapPage />
       ) : activeSection === 'Today' ? (
         <Suspense fallback={<main className="foundation-preview" role="status">Loading today's plan…</main>}><TodayPage /></Suspense>
+      ) : activeSection === 'Knowledge' ? (
+        <Suspense fallback={<main className="foundation-preview" role="status">Loading knowledge profile…</main>}><KnowledgePage /></Suspense>
       ) : (
         <main className="foundation-preview">
           <div>

@@ -1,6 +1,6 @@
 # PROMETHEUS // ATHENA
 
-Phase 07: Today consumes a live study-plan contract alongside the unchanged Roadmap, Home, profile, navigation and onboarding preview.
+Phase 08: Knowledge consumes a live knowledge contract alongside the unchanged Today, Roadmap, Home, profile, navigation and onboarding preview.
 
 Run `npm install`, then `npm run dev`. Production build: `npm run build`.
 
@@ -75,4 +75,24 @@ Today distinguishes loading, unavailable, empty, loaded, all-completed and retry
 
 Verification used external contract tests and intercepted browser transport, not a deployed backend: no-API/no-fetch, skeleton, empty, exact task rows/statuses, date formatting, arrows/Home/End/Enter, Space checkbox activation, write success/refetch, pending isolation, duplicate-write prevention, failure preserving visible status, focus failure/success, active-session elapsed display, disabled capabilities, completed day, reduced motion and responsive desktop/tablet/mobile. Home/Roadmap/Profile/Onboarding and Aurora/Dock were checked. No test task dataset or configured test API is included in the app. Motion was the only new dependency. Build passes; upstream ref lint warnings remain separate from runtime verification.
 
-Visual approval is required before the next phase. No backend, authentication, task generation or persistence has been implemented.
+Knowledge uses actual React Bits [PillNav](https://reactbits.dev/components/pill-nav) and [ElasticSlider](https://reactbits.dev/components/elastic-slider), plus the existing SpotlightCard. PillNav's default links were removed; filters are native buttons with pressed state and a controlled index. The native collapse/animation engine is retained; its hidden measurement strip is contained to avoid mobile overflow. ElasticSlider retains its spring, pointer and keyboard engine with restrained stretch, four ticks and a controlled self-rating value. Only the selected detail mounts one slider and one SpotlightCard. No dependencies were added, and the Knowledge chunk loads only when opened.
+
+Knowledge API contract, relative to VITE_API_BASE_URL:
+
+| Method | Path | Contract |
+| --- | --- | --- |
+| GET | /knowledge | Object containing topics, optional summary and capabilities |
+| GET | /knowledge/topics/:id | Single topic (available service method) |
+| PATCH | /knowledge/topics/:id/self-report | Body contains only selfReportedLevel; response is the persisted topic |
+
+Topics require unique nonempty id/title. Knowledge classification is known/learning/suggested/gap, or unclassified when missing/unknown. Verification status is independently untested/verified/needs_review; omitted verification fields stay omitted. Optional verifiedLevel is text or null; verifiedConfidence is a read-only 0–1 value or null. Null means unverified, never 0%. Self-report enums match onboarding: not_rated/beginner/comfortable/strong, mapped to slider indices 0/1/2/3 by shared helpers; unknown self-ratings normalize to not_rated. Knowledge classifications are never inferred from self-ratings or verification results.
+
+Optional topic fields include description, source, roadmapId, roadmapTopicId, suggestedByAthena, gapReason, lastStudiedAt and updatedAt. Timestamps require offsets; study dates display in Asia/Kolkata. Summary shows only supplied nonnegative integer knownCount/learningCount/suggestedCount/gapCount/verifiedCount values. Filtering never changes backend data. Suggested matches knowledgeState=suggested OR suggestedByAthena=true; gap matches only knowledgeState=gap. A filter with no rows has its own contextual empty state.
+
+Self-report updates require capabilities.updateSelfReport=true, which defaults false until advertised by an implemented backend. Dragging changes only local preview; release (or a keyboard commit) sends one enum-only PATCH. The hook prevents duplicate writes per topic, disables only that topic's slider, then refetches to reconcile. Failure restores the persisted rating and shows an inline error/Retry. Request bodies never contain verifiedLevel, verifiedConfidence or verificationStatus. Diagnostic controls remain hidden because no diagnostic endpoint is implemented. No diagnostic or roadmap-add success is simulated.
+
+Knowledge has separate loading/unavailable/empty/loaded/filter-empty/error states. A missing API URL makes zero requests and displays no topics or metrics. Reads and writes have 15-second limits, abort on unmount/retry and guard against stale responses; the discarded StrictMode mount does not duplicate the initial read. No sample profile or hidden knowledge dataset supplies this page. Existing sample Home/Profile content remains separate.
+
+Knowledge verification uses external service tests and intercepted browser responses rather than a deployed backend. Tests exercise enum normalization, independent null/verified fields, live summaries/topics, filters, local drag preview, release-only self-report requests, confirmation/refetch, rollback, per-topic pending isolation, keyboard controls, responsive collapse and existing-page preservation. The application itself still shows data-source unavailable until configured. Upstream component lint warnings remain distinct from runtime checks.
+
+Visual approval is required before the next phase. No backend, authentication, diagnostics or persistence has been implemented.
