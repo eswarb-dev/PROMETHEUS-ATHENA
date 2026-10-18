@@ -1,0 +1,30 @@
+name: Supabase database health
+on:
+  schedule:
+    - cron: '17 2,10,18 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check database timestamp
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SUPABASE_URL" =~ ^https://[a-zA-Z0-9.-]+(:[0-9]+)?/?$ ]] || { echo 'Configure SUPABASE_URL.'; exit 1; }
+          [[ "$SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* ]] || { echo 'Configure a publishable key.'; exit 1; }
+          response=$(curl --silent --show-error --fail-with-body --connect-timeout 10 --max-time 45 \
+            --request POST "${SUPABASE_URL%/}/rest/v1/rpc/project_keepalive" \
+            --header "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
+            --header 'Content-Type: application/json' --data '{}')
+          jq -e '.ok == true and (.serverTime | type == "string")' <<< "$response" > /dev/null
+          echo 'Database health request succeeded.'
