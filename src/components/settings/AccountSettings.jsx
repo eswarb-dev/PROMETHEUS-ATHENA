@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import SettingsUnavailableState from './SettingsUnavailableState.jsx'
 import { settingsDate } from './settingsFormatters.js'
+import { authService } from '../../services/authService.js'
+import useAuthAction from '../../auth/useAuthAction.js'
 
 export default function AccountSettings({ settings }) {
   const account = settings.data.account
+  const logout = useAuthAction()
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirm: '' })
   const [confirmation, setConfirmation] = useState('')
   const [notice, setNotice] = useState('')
@@ -12,6 +15,6 @@ export default function AccountSettings({ settings }) {
   return <section className="settings-panel"><h2>Account</h2><dl className="settings-account-info">{[['Email', account.email], ['Authentication provider', account.authProvider], ['Created', account.createdAt ? settingsDate(account.createdAt) : null]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value ?? 'Not provided'}</dd></div>)}</dl>
     {settings.data.capabilities.passwordChange && <form className="settings-account-form" onSubmit={async event => { event.preventDefault(); if (!valid || settings.pending.password) return; const payload = { currentPassword: passwords.currentPassword, newPassword: passwords.newPassword }; const ok = await settings.changePassword(payload); setPasswords({ currentPassword: '', newPassword: '', confirm: '' }); if (ok) setNotice('Password change confirmed.') }}><h3>Change password</h3><div className="settings-fields">{[['currentPassword', 'Current password'], ['newPassword', 'New password'], ['confirm', 'Confirm new password']].map(([key, label]) => <div className="profile-field" key={key}><label htmlFor={`settings-password-${key}`}>{label}</label><input id={`settings-password-${key}`} type="password" autoComplete={key === 'currentPassword' ? 'current-password' : 'new-password'} value={passwords[key]} onChange={event => setPasswords(current => ({ ...current, [key]: event.target.value }))} required minLength={key === 'currentPassword' ? undefined : 8} /></div>)}</div><p className="settings-help">Use at least 8 characters. Confirmation must match.</p><button className="settings-button" type="submit" disabled={!valid || settings.pending.password === true}>{settings.pending.password ? 'Changing…' : 'Change password'}</button>{settings.errors.password && <p role="alert" className="settings-error">{settings.errors.password}</p>}</form>}
     {settings.data.capabilities.accountDeletion && <form className="settings-danger" onSubmit={async event => { event.preventDefault(); if (confirmation !== 'DELETE' || settings.pending.deletion) return; await settings.deleteAccount() }}><h3>Delete account</h3><p>This permanently deletes your account. Type DELETE to confirm.</p><div className="profile-field"><label htmlFor="delete-confirmation">Type DELETE</label><input id="delete-confirmation" value={confirmation} autoComplete="off" onChange={event => setConfirmation(event.target.value)} /></div><button className="settings-button settings-danger-button" type="submit" disabled={confirmation !== 'DELETE' || settings.pending.deletion === true}>{settings.pending.deletion ? 'Deleting…' : 'Delete account'}</button>{settings.errors.deletion && <p role="alert" className="settings-error">{settings.errors.deletion}</p>}</form>}
-    <p className="settings-notice" role="status">{notice}</p>
+    <button className="settings-button" type="button" disabled={logout.pending} aria-busy={logout.pending} onClick={() => { void logout.run(() => authService.signOut()) }}>{logout.pending ? 'Signing out…' : 'Sign out'}</button><p className="settings-error" aria-live="polite">{logout.error}</p><p className="settings-notice" role="status">{notice}</p>
   </section>
 }

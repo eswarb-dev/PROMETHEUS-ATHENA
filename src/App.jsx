@@ -1,21 +1,11 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import SoftAurora from './components/background/SoftAurora.jsx'
-import AthenaDock from './components/navigation/AthenaDock.jsx'
-import AthenaDashboard from './components/dashboard/AthenaDashboard.jsx'
-import AthenaOnboarding from './components/onboarding/AthenaOnboarding.jsx'
-import RoadmapPage from './components/roadmap/RoadmapPage.jsx'
+import ProtectedContent from './components/ProtectedContent.jsx'
 import './App.css'
 
-const TodayPage = lazy(() => import('./components/today/TodayPage.jsx'))
-const KnowledgePage = lazy(() => import('./components/knowledge/KnowledgePage.jsx'))
-const AthenaPage = lazy(() => import('./components/athena/AthenaPage.jsx'))
-const ProgressPage = lazy(() => import('./components/progress/ProgressPage.jsx'))
-const SettingsPage = lazy(() => import('./components/settings/SettingsPage.jsx'))
+const ApplicationShell = lazy(() => import('./components/ApplicationShell.jsx'))
 
 export default function App() {
-  const [activeSection, setActiveSection] = useState('Home')
-  const onboarding = new URLSearchParams(window.location.search).get('onboarding') === '1'
-
   return (
     <>
       <div className="athena-background" aria-hidden="true">
@@ -42,31 +32,7 @@ export default function App() {
           opacity={0.9}
         />
       </div>
-      {!onboarding && <AthenaDock activeSection={activeSection} onSelect={setActiveSection} />}
-      {onboarding ? (
-        <AthenaOnboarding />
-      ) : activeSection === 'Home' ? (
-        <AthenaDashboard />
-      ) : activeSection === 'Settings' ? (
-        <Suspense fallback={<main className="foundation-preview" role="status">Loading account settings…</main>}><SettingsPage /></Suspense>
-      ) : activeSection === 'Roadmap' ? (
-        <RoadmapPage />
-      ) : activeSection === 'Today' ? (
-        <Suspense fallback={<main className="foundation-preview" role="status">Loading today's plan…</main>}><TodayPage /></Suspense>
-      ) : activeSection === 'Knowledge' ? (
-        <Suspense fallback={<main className="foundation-preview" role="status">Loading knowledge profile…</main>}><KnowledgePage /></Suspense>
-      ) : activeSection === 'ATHENA' ? (
-        <Suspense fallback={<main className="foundation-preview" role="status">Loading ATHENA…</main>}><AthenaPage /></Suspense>
-      ) : activeSection === 'Progress' ? (
-        <Suspense fallback={<main className="foundation-preview" role="status">Loading progress analytics…</main>}><ProgressPage /></Suspense>
-      ) : (
-        <main className="foundation-preview">
-          <div>
-            <h1>PROMETHEUS // ATHENA</h1>
-            <p aria-live="polite" aria-atomic="true">{activeSection}</p>
-          </div>
-        </main>
-      )}
+      <ProtectedContent><Suspense fallback={<main className="auth-loading" role="status">Loading ATHENA…</main>}><ApplicationShell /></Suspense></ProtectedContent>
     </>
   )
 }
