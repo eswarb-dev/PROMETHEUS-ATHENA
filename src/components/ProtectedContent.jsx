@@ -6,12 +6,17 @@ import { authService } from '../services/authService.js'
 import { useQueryClient } from '@tanstack/react-query'
 import { invalidatePages } from '../lib/query/queryKeys.js'
 import useAuthAction from '../auth/useAuthAction.js'
+import { useEffect } from 'react'
+import { requestWelcomeMail } from '../services/welcomeMailService.js'
 
 function AuthenticatedContent({ children }) {
   const profile = useAuthProfile()
   const client = useQueryClient()
   const { user } = useSession()
   const logout = useAuthAction()
+  useEffect(() => {
+    if (profile.data?.onboardingCompleted === true) void requestWelcomeMail(user.id)
+  }, [profile.data?.onboardingCompleted, user.id])
   if (profile.status === 'loading') return <main className="auth-loading" role="status">Loading your learning profile…</main>
   if (profile.status !== 'loaded') return <main className="auth-loading"><p role="alert">Couldn't confirm your learning profile.</p><button type="button" onClick={() => profile.retry()}>Retry</button><button type="button" disabled={logout.pending} onClick={() => { void logout.run(() => authService.signOut()) }}>Sign out</button><p aria-live="polite">{logout.error}</p></main>
   const preview = import.meta.env.DEV && new URLSearchParams(location.search).get('onboarding') === '1'
