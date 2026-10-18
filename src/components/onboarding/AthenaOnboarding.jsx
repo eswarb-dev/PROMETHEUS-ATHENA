@@ -22,9 +22,9 @@ function StepHeading({ title, children }) {
   return <div className="onboarding-step-heading"><h2>{title}</h2>{children && <p>{children}</p>}</div>
 }
 
-export default function AthenaOnboarding() {
+export default function AthenaOnboarding({ user, profile, preview = false, onComplete }) {
   const [step, setStep] = useState(1)
-  const [account, setAccount] = useState({ name: '', email: '', password: '', confirmPassword: '' })
+  const [account, setAccount] = useState({ name: profile?.name ?? user?.user_metadata?.name ?? '', email: user?.email ?? '', password: '', confirmPassword: '' })
   const [goal, setGoal] = useState({ direction: '', customDirection: '', description: '' })
   const [skills, setSkills] = useState([])
   const [startingFromScratch, setStartingFromScratch] = useState(false)
@@ -38,10 +38,9 @@ export default function AthenaOnboarding() {
   const [capabilityAttempt, setCapabilityAttempt] = useState(0)
   const [pending, setPending] = useState(false)
   const [submissionError, setSubmissionError] = useState('')
-  const [createdAccount, setCreatedAccount] = useState(null)
+  const createdAccount = user ? { id: user.id, email: user.email } : null
   const lifecycle = useRef(null)
   const submission = useRef(null)
-  const lockedAccount = useRef(null)
   useEffect(() => {
     const controller = new AbortController(); lifecycle.current = controller
     Promise.resolve().then(async () => {
@@ -52,7 +51,7 @@ export default function AthenaOnboarding() {
     return () => { controller.abort(); submission.current?.abort() }
   }, [capabilityAttempt])
   const reminderPreference = notifications.email == null ? '' : notifications.email && notifications.whatsapp ? 'both' : notifications.email ? 'email' : notifications.whatsapp ? 'whatsapp' : 'none'
-  const creationSupported = capabilities?.accountCreation === true && capabilities?.profileCompletion === true
+  const creationSupported = !!user && !preview && capabilities?.profileCompletion === true
 
   const accountErrors = {
     name: account.name.trim() ? '' : 'Enter your full name.',
@@ -90,16 +89,10 @@ export default function AthenaOnboarding() {
     try {
       const payload = normalizeOnboarding({ account, goal, skills, studyPreferences, notifications })
       if (notifications.email && !capabilities.emailNotifications || notifications.whatsapp && !capabilities.whatsappNotifications) throw Error('UNSUPPORTED_NOTIFICATIONS')
-      if (!lockedAccount.current) {
-        const result = await onboardingService.createAccount({ name: payload.account.name, email: payload.account.email, password: account.password }, { enabled: true, signal: controller.signal })
-        if (controller.signal.aborted) return
-        lockedAccount.current = result; setCreatedAccount(result)
-        setAccount(current => ({ ...current, password: '', confirmPassword: '' })); setShown({}); setTouched({})
-      }
       await onboardingService.completeOnboarding(payload, { enabled: true, signal: controller.signal })
-      if (!controller.signal.aborted) setStep(6)
+      if (!controller.signal.aborted) { if (onComplete) await onComplete(); else setStep(6) }
     } catch {
-      if (!controller.signal.aborted) setSubmissionError(lockedAccount.current ? 'The backend created your account, but profile submission could not be confirmed. Retry to finish your profile.' : 'Account creation could not be confirmed. Check your account before trying again.')
+      if (!controller.signal.aborted) setSubmissionError('Your learning profile could not be confirmed. Your account is already verified; retry saving your profile.')
     } finally { if (submission.current === controller) submission.current = null; if (!controller.signal.aborted) setPending(false) }
   }
   const field = (key, label, type = 'text') => {
@@ -116,7 +109,7 @@ export default function AthenaOnboarding() {
   }
 
   return <main className="athena-onboarding">
-    <header className="onboarding-header"><p>PROMETHEUS // ATHENA</p><h1>Welcome</h1><p>Set up your learning profile</p><small>{creationSupported ? 'Your details are submitted only when you create your profile.' : 'Account creation is not connected. You can review the setup flow.'}</small></header>
+    <header className="onboarding-header"><p>PROMETHEUS // ATHENA</p><h1>Welcome</h1><p>Set up your learning profile</p><small>{user ? 'Your account is verified. Complete your learning preferences below.' : 'Development preview. Account creation is available from the sign-up screen.'}</small></header>
     <Stepper step={step} initialStep={1} onStepChange={changeStep} onFinalStepCompleted={complete}
       indicator="numbers" orientation="horizontal" transition="slide" linear={true} disableStepIndicators={step > 5 || pending}
       showFooter={true} backButtonText="Back" nextButtonText="Continue" completeButtonText="Create ATHENA Profile"
@@ -126,8 +119,8 @@ export default function AthenaOnboarding() {
       className="athena-stepper" style={{ '--stepper-frame': 'rgba(12, 18, 35, 0.78)', '--stepper-ink': '#F5F7FF', '--stepper-muted': '#B7C0DB', '--stepper-solid-ink': '#080D1A' }}
       completedContent={<div className="onboarding-complete"><p className="onboarding-success">Profile creation confirmed.</p><h2>Your learning profile has been saved.</h2><p>The account service confirmed your account and profile submission.</p><a className="onboarding-dashboard-link" href="/">Open Dashboard</a></div>}
     >
-      <Step title="Account"><StepHeading title="Create your ATHENA account">Start with your details. They stay on this page until you submit.</StepHeading>
-        <div className="onboarding-fields">{field('name', 'Full name')}{field('email', 'Email', 'email')}{field('password', 'Password', 'password')}{field('confirmPassword', 'Confirm password', 'password')}</div>
+      <Step title="Account"><StepHeading title={user ? 'Your verified account' : 'Account preview'}>{user ? 'Your email is verified. Continue to set your learning preferences.' : 'These preview fields are never submitted.'}</StepHeading>
+        <div className="onboarding-fields">{field('name', 'Full name')}{field('email', 'Email', 'email')}{!user && <>{field('password', 'Password', 'password')}{field('confirmPassword', 'Confirm password', 'password')}</>}</div>
       </Step>
       <Step title="Direction"><StepHeading title="What are you working toward?">ATHENA will shape your roadmap around this.</StepHeading>
         <Choices legend="Primary direction" name="direction" options={directions} value={goal.direction} onChange={direction => setGoal(current => ({ ...current, direction }))} />
@@ -154,7 +147,7 @@ export default function AthenaOnboarding() {
           <div><dt>Selected skills · Self-reported</dt><dd>{startingFromScratch ? 'Starting from scratch' : skills.map(skill => `${skill.name} (${skill.selfReportedLevel})`).join(' · ')}</dd></div>
           <div><dt>Daily availability</dt><dd>{preferenceLabel('dailyStudyMinutes', studyPreferences.dailyStudyMinutes)}</dd></div>
           <div><dt>Study period</dt><dd>{preferenceLabel('studyPeriod', studyPreferences.studyPeriod)}</dd></div><div><dt>Learning style</dt><dd>{preferenceLabel('learningStyle', studyPreferences.learningStyle)}</dd></div><div><dt>Task size</dt><dd>{preferenceLabel('taskSize', studyPreferences.taskSize)}</dd></div><div><dt>Reminders</dt><dd>{reminderOptions.find(([key]) => key === reminderPreference)?.[1]}</dd></div>
-        </dl>{!creationSupported && <p className="onboarding-help" role="status">ATHENA account creation is not connected yet.</p>}{capabilityStatus === 'error' && <button type="button" className="onboarding-secondary" onClick={() => { setCapabilityStatus('loading'); setCapabilityAttempt(value => value + 1) }}>Retry connection</button>}{pending && <p className="onboarding-help" role="status">Submitting your profile…</p>}{submissionError && <p className="onboarding-error" role="alert">{submissionError}</p>}
+        </dl>{!creationSupported && <p className="onboarding-help" role="status">Profile submission is disabled in this development preview.</p>}{capabilityStatus === 'error' && <button type="button" className="onboarding-secondary" onClick={() => { setCapabilityStatus('loading'); setCapabilityAttempt(value => value + 1) }}>Retry connection</button>}{pending && <p className="onboarding-help" role="status">Submitting your profile…</p>}{submissionError && <p className="onboarding-error" role="alert">{submissionError}</p>}
       </Step>
     </Stepper>
   </main>

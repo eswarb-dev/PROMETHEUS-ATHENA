@@ -20,7 +20,7 @@ test('migrations, RLS, ownership, snapshots and server-clock mutations in isolat
   try {
     // Only this disposable database receives synthetic Auth users and fixture rows.
     await db.exec(`create role anon nologin; create role authenticated nologin;
-      create schema auth; create table auth.users(id uuid primary key);
+      create schema auth; create table auth.users(id uuid primary key,raw_user_meta_data jsonb,email text,email_confirmed_at timestamptz);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       grant usage on schema auth,public to anon,authenticated;
       grant execute on function auth.uid() to anon,authenticated;`)
@@ -29,8 +29,8 @@ test('migrations, RLS, ownership, snapshots and server-clock mutations in isolat
     const tables = (await db.query("select tablename,rowsecurity from pg_tables where schemaname='public' order by tablename")).rows
     assert.equal(tables.length, 12)
     assert.ok(tables.every(table => table.rowsecurity))
-    await db.exec(`insert into auth.users values ('${a}'),('${b}');
-      insert into public.profiles(id,name) values('${a}','Owner A'),('${b}','Owner B');
+    await db.exec(`insert into auth.users(id) values ('${a}'),('${b}');
+      update public.profiles set name='Owner A' where id='${a}'; update public.profiles set name='Owner B' where id='${b}';
       insert into public.roadmaps(id,user_id,title) values('${roadmapA}','${a}','A roadmap'),('${roadmapB}','${b}','B roadmap');
       insert into public.roadmap_sections(id,roadmap_id,title) values('${sectionA}','${roadmapA}','A section'),('${sectionB}','${roadmapB}','B section');
       insert into public.roadmap_topics(id,roadmap_id,section_id,title) values('${topicA}','${roadmapA}','${sectionA}','A topic'),('${topicB}','${roadmapB}','${sectionB}','B topic');
