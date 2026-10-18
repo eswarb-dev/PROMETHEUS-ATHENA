@@ -19,7 +19,7 @@ test('migrations, RLS, ownership, snapshots and server-clock mutations in isolat
   const denied = async (sql, code = '42501') => assert.rejects(db.exec(sql), error => error.code === code)
   try {
     // Only this disposable database receives synthetic Auth users and fixture rows.
-    await db.exec(`create role anon nologin; create role authenticated nologin;
+    await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role;
       create schema auth; create table auth.users(id uuid primary key,raw_user_meta_data jsonb,email text,email_confirmed_at timestamptz);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       grant usage on schema auth,public to anon,authenticated;
@@ -27,7 +27,7 @@ test('migrations, RLS, ownership, snapshots and server-clock mutations in isolat
     const directory = new URL('../supabase/migrations/', import.meta.url)
     for (const file of (await readdir(directory)).filter(name => name.endsWith('.sql')).sort()) await db.exec(await readFile(new URL(file, directory), 'utf8'))
     const tables = (await db.query("select tablename,rowsecurity from pg_tables where schemaname='public' order by tablename")).rows
-    assert.equal(tables.length, 12)
+    assert.equal(tables.length, 13)
     assert.ok(tables.every(table => table.rowsecurity))
     await db.exec(`insert into auth.users(id) values ('${a}'),('${b}');
       update public.profiles set name='Owner A' where id='${a}'; update public.profiles set name='Owner B' where id='${b}';
