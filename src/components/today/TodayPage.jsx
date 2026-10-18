@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import useToday from '../../hooks/useToday.js'
+import DataAccessState from '../DataAccessState.jsx'
 import AnimatedList from './AnimatedList.jsx'
 import SpecularButton from './SpecularButton.jsx'
 import TodaySummary from './TodaySummary.jsx'
@@ -32,6 +33,7 @@ export default function TodayPage() {
       {plan?.date && <small>{new Intl.DateTimeFormat('en-IN', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${plan.date}T12:00:00Z`))}{plan.timezone ? ` · ${plan.timezone}` : ''}</small>}
     </header>
     {today.status === 'loading' && <TodaySkeleton />}
+    {today.status === 'auth-required' && <DataAccessState />}
     {['unavailable', 'empty', 'error'].includes(today.status) && <TodayEmptyState status={today.status} onRetry={retry} />}
     {plan && <>
       <TodaySummary plan={plan} />

@@ -1,4 +1,5 @@
 import useProgress from '../../hooks/useProgress.js'
+import DataAccessState from '../DataAccessState.jsx'
 import ProgressSummary, { ProgressNumber } from './ProgressSummary.jsx'
 import WeeklyActivityChart from './WeeklyActivityChart.jsx'
 import TopicProgressChart from './TopicProgressChart.jsx'
@@ -16,6 +17,7 @@ export default function ProgressPage() {
   return <main className="athena-progress"><header className="progress-page-header"><p>PROMETHEUS // ATHENA</p><h1>Progress</h1><p>See how your learning is evolving over time.</p></header>
     {progress.data?.capabilities.rangeQueries && <div className="progress-ranges" role="group" aria-label="Analytics range">{[['7d', '7 days'], ['30d', '30 days'], ['90d', '90 days']].map(([range, label]) => <button key={range} type="button" className="progress-button" aria-pressed={progress.selectedRange === range} onClick={() => progress.changeRange(range)}>{label}</button>)}</div>}
     {progress.status === 'loading' && <ProgressSkeleton />}
+    {progress.status === 'auth-required' && <DataAccessState />}
     {['unavailable', 'empty', 'error'].includes(progress.status) && <ProgressEmptyState status={progress.status} onRetry={progress.retry} />}
     {progress.status === 'loaded' && <>
       <div className="progress-update"><button type="button" className="progress-button" disabled={progress.refreshing} onClick={progress.refresh}>{progress.refreshing ? 'Refreshing…' : 'Refresh analytics'}</button><span role="status">{progress.refreshing ? 'Refreshing analytics.' : progress.refreshError ? 'Could not refresh. Showing the previous analytics; use Refresh analytics to retry.' : ''}</span></div>

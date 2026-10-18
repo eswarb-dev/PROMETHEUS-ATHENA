@@ -13,3 +13,8 @@ html, body, #root { width: 100%; min-height: 100%; margin: 0; }
 html { overflow-x: hidden; }
 body { min-width: 0; min-height: 100vh; }
 #root { isolation: isolate; }
+.data-access-state { padding: 24px; border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; background: rgba(12,18,35,0.78); overflow-wrap: anywhere; }
+.data-access-state h2 { margin: 0 0 12px; font-size: 20px; font-weight: 550; }
+.data-access-state p { margin: 0; line-height: 1.6; color: #b7c0db; }
+.data-access-state button { margin-top: 16px; padding: 10px 16px; background: #7c6cff; border: 0; border-radius: 8px; color: #080d1a; cursor: pointer; }
+.data-access-state button:focus-visible { outline: 2px solid #37d7ff; outline-offset: 4px; }

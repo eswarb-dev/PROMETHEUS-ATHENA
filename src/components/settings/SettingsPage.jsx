@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useSettings from '../../hooks/useSettings.js'
+import DataAccessState from '../DataAccessState.jsx'
 import PillNav from '../knowledge/PillNav.jsx'
 import ProfileSettings from './ProfileSettings.jsx'
 import StudyPreferencesSettings from './StudyPreferencesSettings.jsx'
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const Section = [ProfileSettings, StudyPreferencesSettings, NotificationSettings, AccountSettings][activeSettingsSection]
   return <main className="athena-settings"><header className="settings-page-header"><p>PROMETHEUS // ATHENA</p><h1>Settings</h1><p>Manage your profile, study preferences and account.</p></header>
     {settings.status === 'loading' && <SettingsSkeleton />}
+    {settings.status === 'auth-required' && <DataAccessState />}
     {settings.status === 'unavailable' && <SettingsUnavailableState />}
     {settings.status === 'error' && <SettingsErrorState onRetry={settings.retry} />}
     {settings.status === 'deleted' && <section className="settings-panel" role="status"><h2>Account deletion confirmed.</h2><p>Your account service confirmed that the account was deleted.</p></section>}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import useRoadmap from '../../hooks/useRoadmap.js'
+import DataAccessState from '../DataAccessState.jsx'
 import AnimatedContent from './AnimatedContent.jsx'
 import BranchedMenu from './BranchedMenu.jsx'
 import RoadmapEmptyState from './RoadmapEmptyState.jsx'
@@ -25,6 +26,7 @@ export default function RoadmapPage() {
   return <main className="athena-roadmap">
     <header className="roadmap-page-header"><p>PROMETHEUS // ATHENA</p><h1>Roadmap</h1><p>Your adaptive learning path.</p></header>
     {status === 'loading' && <RoadmapSkeleton />}
+    {status === 'auth-required' && <DataAccessState />}
     {['empty', 'unavailable', 'error'].includes(status) && <RoadmapEmptyState status={status} onRetry={retry} />}
     {status === 'loaded' && <>
       <AnimatedContent {...reveal}><section className="roadmap-summary" aria-label="Roadmap overview"><div><h2>{data.roadmap.title}</h2>{data.roadmap.goal && <p>{data.roadmap.goal}</p>}</div><div className="roadmap-summary-metrics">

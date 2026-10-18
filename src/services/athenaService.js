@@ -34,7 +34,7 @@ function capabilities(value) {
   }
   return { ...result, streaming: result.streaming && value.streamProtocol === 'athena-snapshot-v1', attachments: false, dictation: false, sources: result.sourceTargeting ? options('sources') : [], commandOptions: result.commands ? options('commandOptions').filter(row => /^\/[a-z][a-z0-9-]*$/.test(row.name)) : [] }
 }
-export function createAthenaService(baseUrl = import.meta.env?.VITE_API_BASE_URL, fetchImpl = globalThis.fetch) {
+export function createAthenaService(baseUrl = import.meta.env?.VITE_ATHENA_API_BASE_URL, fetchImpl = globalThis.fetch) {
   async function request(path, { signal, method = 'GET', body, onSnapshot, conversationId } = {}) {
     if (!baseUrl?.trim()) throw new AthenaServiceError('DATA_SOURCE_NOT_CONFIGURED')
     let base

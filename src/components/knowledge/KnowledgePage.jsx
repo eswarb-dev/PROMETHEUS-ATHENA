@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import useKnowledge from '../../hooks/useKnowledge.js'
+import DataAccessState from '../DataAccessState.jsx'
 import PillNav from './PillNav.jsx'
 import KnowledgeSkeleton from './KnowledgeSkeleton.jsx'
 import KnowledgeEmptyState from './KnowledgeEmptyState.jsx'
@@ -19,6 +20,7 @@ export default function KnowledgePage() {
   const retry = () => { setSelectedId(null); knowledge.retry() }
   return <main className="athena-knowledge"><header className="knowledge-page-header"><p>PROMETHEUS // ATHENA</p><h1>Knowledge</h1><p>Understand what you know and where to grow.</p></header>
     {knowledge.status === 'loading' && <KnowledgeSkeleton />}
+    {knowledge.status === 'auth-required' && <DataAccessState />}
     {['unavailable', 'empty', 'error'].includes(knowledge.status) && <KnowledgeEmptyState status={knowledge.status} onRetry={retry} />}
     {knowledge.status === 'loaded' && <>
       <div className="knowledge-filters"><PillNav items={knowledgeFilters} activeItemIndex={knowledgeFilters.findIndex(item => item.value === filter)} onItemClick={item => { setFilter(item.value); setSelectedId(null) }} theme="dark" layout="joined" itemStyle="pill" hoverEffect="glide" indicator="pill" surface="glass" size="sm" highlightColor="#7C6CFF" highlightTextColor="#080D1A" barColor="rgba(12,18,35,0.72)" textColor="#F5F7FF" bounce={0.18} stretch={0.32} collapse="auto" intro={true} ariaLabel="Knowledge filters" /></div>
