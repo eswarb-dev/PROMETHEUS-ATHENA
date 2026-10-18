@@ -3,8 +3,6 @@ import SoftAurora from './components/background/SoftAurora.jsx'
 import AthenaDock from './components/navigation/AthenaDock.jsx'
 import AthenaDashboard from './components/dashboard/AthenaDashboard.jsx'
 import AthenaOnboarding from './components/onboarding/AthenaOnboarding.jsx'
-import AthenaProfile from './components/profile/AthenaProfile.jsx'
-import { createDemoProfile } from './components/profile/demoProfile.js'
 import RoadmapPage from './components/roadmap/RoadmapPage.jsx'
 import './App.css'
 
@@ -12,10 +10,10 @@ const TodayPage = lazy(() => import('./components/today/TodayPage.jsx'))
 const KnowledgePage = lazy(() => import('./components/knowledge/KnowledgePage.jsx'))
 const AthenaPage = lazy(() => import('./components/athena/AthenaPage.jsx'))
 const ProgressPage = lazy(() => import('./components/progress/ProgressPage.jsx'))
+const SettingsPage = lazy(() => import('./components/settings/SettingsPage.jsx'))
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('Home')
-  const [profile, setProfile] = useState(createDemoProfile)
   const onboarding = new URLSearchParams(window.location.search).get('onboarding') === '1'
 
   return (
@@ -50,7 +48,7 @@ export default function App() {
       ) : activeSection === 'Home' ? (
         <AthenaDashboard />
       ) : activeSection === 'Settings' ? (
-        <AthenaProfile profile={profile} onSave={setProfile} />
+        <Suspense fallback={<main className="foundation-preview" role="status">Loading account settings…</main>}><SettingsPage /></Suspense>
       ) : activeSection === 'Roadmap' ? (
         <RoadmapPage />
       ) : activeSection === 'Today' ? (

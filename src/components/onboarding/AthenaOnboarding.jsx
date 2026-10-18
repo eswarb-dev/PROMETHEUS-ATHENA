@@ -1,22 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Stepper, { Step } from './Stepper.jsx'
+import { preferenceDefinitions, preferenceLabel, selfReportOptions, validPreference, normalizeOnboarding } from '../../domain/studyPreferences.js'
+import { onboardingService } from '../../services/onboardingService.js'
 import './AthenaOnboarding.css'
 
 const directions = ['AI / Machine Learning', 'Full-Stack Development', 'Data Science', 'Mobile Development', 'Cybersecurity', 'Cloud / DevOps', 'Research / Higher Studies', 'Placement Preparation', 'Custom']
 const skillOptions = ['Python', 'Java', 'C / C++', 'JavaScript', 'React', 'Node.js', 'SQL', 'Git', 'Machine Learning', 'Deep Learning', 'RAG', 'Cloud', 'UI / UX', 'DSA']
-const studyOptions = [
-  ['dailyStudyMinutes', 'Available time per day', [['15', '15 min'], ['30', '30 min'], ['45', '45 min'], ['60', '1 hour'], ['90', '1.5 hours'], ['120', '2+ hours']]],
-  ['studyPeriod', 'Preferred study period', ['Morning', 'Afternoon', 'Evening', 'Night', 'Flexible']],
-  ['learningStyle', 'Learning preference', ['Build first', 'Theory first', 'Balanced', 'Practice-heavy']],
-  ['taskSize', 'Preferred task size', ['Quick 15–25 min', 'Focused 30–60 min', 'Deep 1–2 hour sessions']],
-  ['reminderPreference', 'Reminder preference', ['Email', 'WhatsApp', 'Both', 'None']],
-]
+const studyOptions = preferenceDefinitions.map(([key, label, options]) => [key, key === 'dailyStudyMinutes' ? 'Available time per day' : key === 'taskSize' ? 'Preferred task size' : label, options])
+const reminderOptions = [['email', 'Email'], ['whatsapp', 'WhatsApp'], ['both', 'Both'], ['none', 'None']]
 
-function Choices({ legend, name, options, value, onChange }) {
+function Choices({ legend, name, options, value, onChange, disabledOptions = [] }) {
   return <fieldset className="onboarding-choices"><legend>{legend}</legend><div className="onboarding-choice-grid">
     {options.map(option => {
       const [key, label] = Array.isArray(option) ? option : [option, option]
-      return <label key={key} className="onboarding-choice"><input type="radio" name={name} value={key} checked={value === key} onChange={() => onChange(key)} /><span>{label}</span></label>
+      return <label key={key} className="onboarding-choice"><input type="radio" name={name} value={key} checked={value === key} disabled={disabledOptions.includes(key)} onChange={() => onChange(key)} /><span>{label}</span></label>
     })}
   </div></fieldset>
 }
@@ -32,10 +29,30 @@ export default function AthenaOnboarding() {
   const [skills, setSkills] = useState([])
   const [startingFromScratch, setStartingFromScratch] = useState(false)
   const [customSkill, setCustomSkill] = useState('')
-  const [preferences, setPreferences] = useState({ dailyStudyMinutes: '', studyPeriod: '', learningStyle: '', taskSize: '', reminderPreference: '' })
+  const [studyPreferences, setStudyPreferences] = useState({ dailyStudyMinutes: '', studyPeriod: '', learningStyle: '', taskSize: '' })
+  const [notifications, setNotifications] = useState({ email: null, whatsapp: null })
   const [touched, setTouched] = useState({})
   const [shown, setShown] = useState({})
-  const [demoProfile, setDemoProfile] = useState(null)
+  const [capabilities, setCapabilities] = useState(null)
+  const [capabilityStatus, setCapabilityStatus] = useState('loading')
+  const [capabilityAttempt, setCapabilityAttempt] = useState(0)
+  const [pending, setPending] = useState(false)
+  const [submissionError, setSubmissionError] = useState('')
+  const [createdAccount, setCreatedAccount] = useState(null)
+  const lifecycle = useRef(null)
+  const submission = useRef(null)
+  const lockedAccount = useRef(null)
+  useEffect(() => {
+    const controller = new AbortController(); lifecycle.current = controller
+    Promise.resolve().then(async () => {
+      if (controller.signal.aborted) return
+      try { const data = await onboardingService.getOnboardingCapabilities({ signal: controller.signal }); if (!controller.signal.aborted) { setCapabilities(data); setCapabilityStatus('loaded') } }
+      catch (error) { if (!controller.signal.aborted) setCapabilityStatus(error.code === 'DATA_SOURCE_NOT_CONFIGURED' ? 'unavailable' : 'error') }
+    })
+    return () => { controller.abort(); submission.current?.abort() }
+  }, [capabilityAttempt])
+  const reminderPreference = notifications.email == null ? '' : notifications.email && notifications.whatsapp ? 'both' : notifications.email ? 'email' : notifications.whatsapp ? 'whatsapp' : 'none'
+  const creationSupported = capabilities?.accountCreation === true && capabilities?.profileCompletion === true
 
   const accountErrors = {
     name: account.name.trim() ? '' : 'Enter your full name.',
@@ -44,14 +61,14 @@ export default function AthenaOnboarding() {
     confirmPassword: account.confirmPassword && account.confirmPassword === account.password ? '' : 'Passwords do not match.',
   }
   const valid = [
-    Object.values(accountErrors).every(error => !error),
+    createdAccount ? !!(account.name.trim() && account.email.trim()) : Object.values(accountErrors).every(error => !error),
     !!(goal.direction && (goal.direction !== 'Custom' || goal.customDirection.trim()) && goal.description.trim()),
     skills.length > 0 || startingFromScratch,
-    Object.values(preferences).every(Boolean),
+    studyOptions.every(([key]) => validPreference(key, studyPreferences[key])) && reminderPreference !== '' && (capabilityStatus !== 'loaded' || (!notifications.email || capabilities.emailNotifications) && (!notifications.whatsapp || capabilities.whatsappNotifications)),
   ]
   const canContinue = step === 5 ? valid.every(Boolean) : valid[step - 1]
   const changeStep = next => {
-    if (next < step || valid.slice(0, next - 1).every(Boolean)) setStep(next)
+    if (!pending && (next < step || valid.slice(0, next - 1).every(Boolean))) setStep(next)
   }
   const toggleSkill = name => {
     setStartingFromScratch(false)
@@ -66,43 +83,50 @@ export default function AthenaOnboarding() {
     setSkills(current => current.some(skill => skill.name.toLowerCase() === name.toLowerCase()) ? current : [...current, { name, selfReportedLevel: 'beginner', verifiedLevel: null, confidenceScore: null }])
     setCustomSkill('')
   }
-  const complete = () => {
-    if (!valid.every(Boolean)) return
-    setDemoProfile({
-      profile: { name: account.name.trim(), email: account.email.trim() },
-      goal: { direction: goal.direction === 'Custom' ? goal.customDirection.trim() : goal.direction, description: goal.description.trim() },
-      skills: skills.map(skill => ({ ...skill })),
-      preferences: { ...preferences, dailyStudyMinutes: Number(preferences.dailyStudyMinutes) },
-    })
-    setAccount(current => ({ ...current, password: '', confirmPassword: '' }))
-    setShown({})
-    setTouched({})
-    setStep(6)
+  const complete = async () => {
+    if (!valid.every(Boolean) || !creationSupported || submission.current) return
+    const controller = new AbortController(); submission.current = controller
+    setPending(true); setSubmissionError('')
+    try {
+      const payload = normalizeOnboarding({ account, goal, skills, studyPreferences, notifications })
+      if (notifications.email && !capabilities.emailNotifications || notifications.whatsapp && !capabilities.whatsappNotifications) throw Error('UNSUPPORTED_NOTIFICATIONS')
+      if (!lockedAccount.current) {
+        const result = await onboardingService.createAccount({ name: payload.account.name, email: payload.account.email, password: account.password }, { enabled: true, signal: controller.signal })
+        if (controller.signal.aborted) return
+        lockedAccount.current = result; setCreatedAccount(result)
+        setAccount(current => ({ ...current, password: '', confirmPassword: '' })); setShown({}); setTouched({})
+      }
+      await onboardingService.completeOnboarding(payload, { enabled: true, signal: controller.signal })
+      if (!controller.signal.aborted) setStep(6)
+    } catch {
+      if (!controller.signal.aborted) setSubmissionError(lockedAccount.current ? 'The backend created your account, but profile submission could not be confirmed. Retry to finish your profile.' : 'Account creation could not be confirmed. Check your account before trying again.')
+    } finally { if (submission.current === controller) submission.current = null; if (!controller.signal.aborted) setPending(false) }
   }
   const field = (key, label, type = 'text') => {
     const secret = type === 'password'
-    const error = touched[key] && accountErrors[key]
+    const error = !createdAccount && touched[key] && accountErrors[key]
     return <div className="onboarding-field" key={key}>
       <label htmlFor={`account-${key}`}>{label}</label>
-      <div className="onboarding-input-wrap"><input id={`account-${key}`} name={key} type={secret && shown[key] ? 'text' : type} autoComplete={secret ? 'new-password' : key === 'name' ? 'name' : 'email'} value={account[key]} required aria-invalid={!!error} aria-describedby={error ? `${key}-error` : secret && key === 'password' ? 'password-hint' : undefined} onChange={event => setAccount(current => ({ ...current, [key]: event.target.value }))} onBlur={() => setTouched(current => ({ ...current, [key]: true }))} />
+      <div className="onboarding-input-wrap"><input id={`account-${key}`} name={key} type={secret && shown[key] ? 'text' : type} autoComplete={secret ? 'new-password' : key === 'name' ? 'name' : 'email'} value={account[key]} readOnly={createdAccount !== null} required={!createdAccount} aria-invalid={!!error} aria-describedby={error ? `${key}-error` : secret && key === 'password' ? 'password-hint' : undefined} onChange={event => setAccount(current => ({ ...current, [key]: event.target.value }))} onBlur={() => setTouched(current => ({ ...current, [key]: true }))} />
         {secret && <button type="button" className="password-toggle" aria-label={`${shown[key] ? 'Hide' : 'Show'} ${label.toLowerCase()}`} aria-pressed={!!shown[key]} onClick={() => setShown(current => ({ ...current, [key]: !current[key] }))}>{shown[key] ? 'Hide' : 'Show'}</button>}
       </div>
-      {key === 'password' && !error && <small id="password-hint">At least 8 characters.</small>}
+      {key === 'password' && !error && <small id="password-hint">{createdAccount ? 'Credentials cleared after confirmed account creation.' : 'At least 8 characters.'}</small>}
       {error && <small className="onboarding-error" id={`${key}-error`}>{error}</small>}
     </div>
   }
 
   return <main className="athena-onboarding">
-    <header className="onboarding-header"><p>PROMETHEUS // ATHENA</p><h1>Welcome</h1><p>Set up your learning profile</p><small>UI preview only. No account is created or saved.</small></header>
+    <header className="onboarding-header"><p>PROMETHEUS // ATHENA</p><h1>Welcome</h1><p>Set up your learning profile</p><small>{creationSupported ? 'Your details are submitted only when you create your profile.' : 'Account creation is not connected. You can review the setup flow.'}</small></header>
     <Stepper step={step} initialStep={1} onStepChange={changeStep} onFinalStepCompleted={complete}
-      indicator="numbers" orientation="horizontal" transition="slide" linear={true} disableStepIndicators={step > 5}
+      indicator="numbers" orientation="horizontal" transition="slide" linear={true} disableStepIndicators={step > 5 || pending}
       showFooter={true} backButtonText="Back" nextButtonText="Continue" completeButtonText="Create ATHENA Profile"
-      nextButtonProps={{ disabled: !canContinue, onClick: event => { if (!canContinue) event.preventDefault() } }}
+      backButtonProps={{ disabled: pending }}
+      nextButtonProps={{ disabled: !canContinue || pending || step === 5 && !creationSupported, onClick: event => { if (!canContinue || pending || step === 5 && !creationSupported) event.preventDefault() } }}
       theme="dark" accentColor="#7C6CFF" frame={true} radius={24} width={800}
       className="athena-stepper" style={{ '--stepper-frame': 'rgba(12, 18, 35, 0.78)', '--stepper-ink': '#F5F7FF', '--stepper-muted': '#B7C0DB', '--stepper-solid-ink': '#080D1A' }}
-      completedContent={<div className="onboarding-complete"><p className="onboarding-success">Profile ready.</p><h2>You're ready, {demoProfile?.profile.name}.</h2><p>This temporary profile has the information ATHENA will need to build your learning roadmap. Nothing has been saved.</p><a className="onboarding-dashboard-link" href="/">Open Dashboard</a></div>}
+      completedContent={<div className="onboarding-complete"><p className="onboarding-success">Profile creation confirmed.</p><h2>Your learning profile has been saved.</h2><p>The account service confirmed your account and profile submission.</p><a className="onboarding-dashboard-link" href="/">Open Dashboard</a></div>}
     >
-      <Step title="Account"><StepHeading title="Create your ATHENA account">Start with your details. This preview keeps them only while the page is open.</StepHeading>
+      <Step title="Account"><StepHeading title="Create your ATHENA account">Start with your details. They stay on this page until you submit.</StepHeading>
         <div className="onboarding-fields">{field('name', 'Full name')}{field('email', 'Email', 'email')}{field('password', 'Password', 'password')}{field('confirmPassword', 'Confirm password', 'password')}</div>
       </Step>
       <Step title="Direction"><StepHeading title="What are you working toward?">ATHENA will shape your roadmap around this.</StepHeading>
@@ -114,12 +138,13 @@ export default function AthenaOnboarding() {
       <Step title="Skills"><StepHeading title="What do you already know?">Don't worry about being exact. ATHENA can verify knowledge later. These levels are self-reported, not verified.</StepHeading>
         <fieldset className="onboarding-choices"><legend>Select your skills</legend><div className="onboarding-choice-grid">{[...skillOptions, ...skills.filter(skill => !skillOptions.includes(skill.name)).map(skill => skill.name)].map(name => <label className="onboarding-choice" key={name}><input type="checkbox" checked={skills.some(skill => skill.name === name)} onChange={() => toggleSkill(name)} /><span>{name}</span></label>)}</div></fieldset>
         <div className="onboarding-custom-skill"><div className="onboarding-field"><label htmlFor="custom-skill">Custom skill</label><input id="custom-skill" value={customSkill} maxLength={80} onChange={event => setCustomSkill(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addSkill() } }} /></div><button type="button" className="onboarding-secondary" disabled={!customSkill.trim()} onClick={addSkill}>+ Add custom skill</button></div>
-        {skills.length > 0 && <div className="onboarding-skill-levels">{skills.map(skill => <div className="onboarding-field" key={skill.name}><label htmlFor={`skill-${encodeURIComponent(skill.name)}`}>{skill.name}: self-reported level</label><select id={`skill-${encodeURIComponent(skill.name)}`} value={skill.selfReportedLevel} onChange={event => setSkills(current => current.map(item => item.name === skill.name ? { ...item, selfReportedLevel: event.target.value } : item))}><option value="beginner">Beginner</option><option value="comfortable">Comfortable</option><option value="strong">Strong</option></select></div>)}</div>}
+        {skills.length > 0 && <div className="onboarding-skill-levels">{skills.map(skill => <div className="onboarding-field" key={skill.name}><label htmlFor={`skill-${encodeURIComponent(skill.name)}`}>{skill.name}: self-reported level</label><select id={`skill-${encodeURIComponent(skill.name)}`} value={skill.selfReportedLevel} onChange={event => setSkills(current => current.map(item => item.name === skill.name ? { ...item, selfReportedLevel: event.target.value } : item))}>{selfReportOptions.filter(([key]) => key !== 'not_rated').map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>)}</div>}
         <label className="onboarding-scratch"><input type="checkbox" checked={startingFromScratch} onChange={event => { setStartingFromScratch(event.target.checked); if (event.target.checked) setSkills([]) }} /><span>I'm starting from scratch</span></label>
         {!valid[2] && <p className="onboarding-help">Select at least one skill, or choose to start from scratch.</p>}
       </Step>
       <Step title="Study Style"><StepHeading title="How do you want ATHENA to work with you?">Choose a rhythm that fits your day.</StepHeading>
-        {studyOptions.map(([key, legend, options]) => <Choices key={key} legend={legend} name={key} options={options} value={preferences[key]} onChange={value => setPreferences(current => ({ ...current, [key]: value }))} />)}
+        {studyOptions.map(([key, legend, options]) => <Choices key={key} legend={legend} name={key} options={options} value={studyPreferences[key]} onChange={value => setStudyPreferences(current => ({ ...current, [key]: value }))} />)}
+        <Choices legend="Reminder preference" name="reminderPreference" options={reminderOptions} value={reminderPreference} disabledOptions={capabilityStatus === 'loaded' ? reminderOptions.filter(([key]) => (key === 'email' || key === 'both') && !capabilities.emailNotifications || (key === 'whatsapp' || key === 'both') && !capabilities.whatsappNotifications).map(([key]) => key) : []} onChange={value => setNotifications({ email: value === 'email' || value === 'both', whatsapp: value === 'whatsapp' || value === 'both' })} />
         <p className="onboarding-help">Reminders are a preference only. No email or WhatsApp messages will be sent.</p>
       </Step>
       <Step title="Review"><StepHeading title="Your ATHENA profile">Review your choices. You can change these later.</StepHeading>
@@ -127,9 +152,9 @@ export default function AthenaOnboarding() {
           <div><dt>Name</dt><dd>{account.name}</dd></div><div><dt>Email</dt><dd>{account.email}</dd></div>
           <div><dt>Primary direction</dt><dd>{goal.direction === 'Custom' ? goal.customDirection : goal.direction}</dd></div><div><dt>Main goal</dt><dd>{goal.description}</dd></div>
           <div><dt>Selected skills · Self-reported</dt><dd>{startingFromScratch ? 'Starting from scratch' : skills.map(skill => `${skill.name} (${skill.selfReportedLevel})`).join(' · ')}</dd></div>
-          <div><dt>Daily availability</dt><dd>{studyOptions[0][2].find(([key]) => key === preferences.dailyStudyMinutes)?.[1]}</dd></div>
-          <div><dt>Study period</dt><dd>{preferences.studyPeriod}</dd></div><div><dt>Learning style</dt><dd>{preferences.learningStyle}</dd></div><div><dt>Task size</dt><dd>{preferences.taskSize}</dd></div><div><dt>Reminders</dt><dd>{preferences.reminderPreference}</dd></div>
-        </dl><p className="onboarding-help">Creating this preview profile does not create an account or save your details.</p>
+          <div><dt>Daily availability</dt><dd>{preferenceLabel('dailyStudyMinutes', studyPreferences.dailyStudyMinutes)}</dd></div>
+          <div><dt>Study period</dt><dd>{preferenceLabel('studyPeriod', studyPreferences.studyPeriod)}</dd></div><div><dt>Learning style</dt><dd>{preferenceLabel('learningStyle', studyPreferences.learningStyle)}</dd></div><div><dt>Task size</dt><dd>{preferenceLabel('taskSize', studyPreferences.taskSize)}</dd></div><div><dt>Reminders</dt><dd>{reminderOptions.find(([key]) => key === reminderPreference)?.[1]}</dd></div>
+        </dl>{!creationSupported && <p className="onboarding-help" role="status">ATHENA account creation is not connected yet.</p>}{capabilityStatus === 'error' && <button type="button" className="onboarding-secondary" onClick={() => { setCapabilityStatus('loading'); setCapabilityAttempt(value => value + 1) }}>Retry connection</button>}{pending && <p className="onboarding-help" role="status">Submitting your profile…</p>}{submissionError && <p className="onboarding-error" role="alert">{submissionError}</p>}
       </Step>
     </Stepper>
   </main>

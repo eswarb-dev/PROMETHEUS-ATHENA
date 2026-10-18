@@ -1,0 +1,1 @@
+export default function SettingsErrorState({ onRetry }) { return <section className="settings-panel" role="alert"><h2>Couldn't load your settings.</h2><button type="button" className="settings-button" onClick={onRetry}>Retry</button></section> }
