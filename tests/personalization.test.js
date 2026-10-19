@@ -159,8 +159,8 @@ test('legacy migration preserves email consent and historical deliveries without
  const db=new PGlite()
  try{
   await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key,raw_user_meta_data jsonb,email text,email_confirmed_at timestamptz);create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;grant usage on schema public,auth to authenticated,anon,service_role;`)
-  const dir=new URL('../supabase/migrations/',import.meta.url),files=(await readdir(dir)).sort(),last=files.pop()
-  for(const file of files)await db.exec(await readFile(new URL(file,dir),'utf8'))
+  const dir=new URL('../supabase/migrations/',import.meta.url),files=(await readdir(dir)).sort(),index=files.findIndex(file=>file.includes('email_only_reminders')),last=files[index]
+  for(const file of files.slice(0,index))await db.exec(await readFile(new URL(file,dir),'utf8'))
   await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now()),($3,$4,now())',[a,'owner-a@example.invalid',b,'owner-b@example.invalid'])
   await asUser(db,a);await rpc(db,'complete_onboarding',payload(30,'build_first','quick',{email:true,whatsapp:true,whatsappNumber:'+15555550123'}))
   await asUser(db,b);await rpc(db,'complete_onboarding',payload(30,'build_first','quick',{email:false,whatsapp:true,whatsappNumber:'+15555550124'}))

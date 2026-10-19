@@ -27,7 +27,7 @@ test('migrations, RLS, ownership, snapshots and server-clock mutations in isolat
     const directory = new URL('../supabase/migrations/', import.meta.url)
     for (const file of (await readdir(directory)).filter(name => name.endsWith('.sql')).sort()) await db.exec(await readFile(new URL(file, directory), 'utf8'))
     const tables = (await db.query("select tablename,rowsecurity from pg_tables where schemaname='public' order by tablename")).rows
-    assert.equal(tables.length, 17)
+    assert.equal(tables.length, 21)
     assert.ok(tables.every(table => table.rowsecurity))
     await db.exec(`insert into auth.users(id) values ('${a}'),('${b}');
       update public.profiles set name='Owner A' where id='${a}'; update public.profiles set name='Owner B' where id='${b}';

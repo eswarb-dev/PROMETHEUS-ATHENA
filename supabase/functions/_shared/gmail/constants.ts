@@ -1,0 +1,9 @@
+export const SYSTEM_MAILBOX = 'prometheus.inference@gmail.com'
+export const GMAIL_READONLY = 'https://www.googleapis.com/auth/gmail.readonly'
+export const OAUTH_CALLBACK = 'https://frvradlyzonrghjoachd.supabase.co/functions/v1/gmail-oauth-callback'
+export const AUTHORIZATION_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
+export const TOKEN_URL = 'https://oauth2.googleapis.com/token'
+export const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me/'
+export const BODY_BYTES = 65536
+export const MIME_INPUT_BYTES = 131072
+export const STATE_TTL_SECONDS = 600

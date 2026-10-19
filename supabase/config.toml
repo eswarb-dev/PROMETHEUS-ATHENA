@@ -40,6 +40,14 @@ verify_jwt = false
 # Scheduler secret or verified Auth user; authenticated users can only request their own rate-limited test.
 verify_jwt = false
 
+[functions.gmail-oauth-start]
+# Server bootstrap-secret authorization; ordinary Auth users cannot start system OAuth.
+verify_jwt = false
+
+[functions.gmail-oauth-callback]
+# Google callback: expiring single-use state and PKCE are checked by the handler.
+verify_jwt = false
+
 [auth.email.notification.password_changed]
 enabled = true
 subject = "Your ATHENA password changed"
