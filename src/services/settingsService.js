@@ -3,9 +3,9 @@ import { rpc } from '../lib/supabase/request.js'
 import { DataError, normalizeError } from '../lib/supabase/errors.js'
 import { validPreference } from '../domain/studyPreferences.js'
 import { sessionIdentity } from '../lib/auth/sessionIdentity.js'
+import { normalizeDirections } from '../domain/learningDirections.js'
 export const notificationKeys = ['studyReminders', 'weeklyReport', 'email', 'whatsapp']
 const mappings = {
-  profile: { name: 'name', direction: 'direction', goal: 'goal' },
   study_preferences: { dailyStudyMinutes: 'daily_study_minutes', studyPeriod: 'study_period', learningStyle: 'learning_style', taskSize: 'task_size' },
   notification_preferences: { studyReminders: 'study_reminders', weeklyReport: 'weekly_report' },
 }
@@ -27,7 +27,13 @@ export const settingsService = {
     const account = { email: user?.email, createdAt: user?.created_at, authProvider: user?.app_metadata?.provider }
     return { ...data, account, profile: data.profile ? { ...data.profile, email: user?.email } : null }
   },
-  updateProfile: (payload, options) => patch('profile', payload, options),
+  async updateProfile(payload, options) {
+    const clean = { ...payload }
+    if (clean.directions) clean.directions = normalizeDirections(clean.directions)
+    const result = await rpc('update_learning_profile', { p_patch: clean }, options)
+    if (result?.saved !== true) throw new DataError('QUERY_ERROR')
+    return result
+  },
   updateStudyPreferences: (payload, options) => patch('study_preferences', payload, options),
   updateNotificationPreferences: (payload, options) => patch('notification_preferences', payload, options),
 }

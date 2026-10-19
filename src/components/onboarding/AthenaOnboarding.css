@@ -37,6 +37,27 @@
 .athena-onboarding button:disabled { cursor: default; }
 .onboarding-secondary:disabled { opacity: 0.45; }
 .onboarding-skill-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.onboarding-selected-skills h3 { font-size: 14px; font-weight: 500; margin: 0 0 12px; }
+.onboarding-skill-levels { gap: 12px; }
+.onboarding-skill-editor { min-width: 0; padding: 14px; border: 1px solid #ffffff18; border-radius: 12px; background: #ffffff03; }
+.onboarding-skill-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.onboarding-skill-heading strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.onboarding-remove { border: 0; background: transparent; color: #b7c0db; font: inherit; font-size: 12px; min-height: 36px; padding: 4px; cursor: pointer; }
+.onboarding-proficiency { display: flex; padding: 0; border: 0; margin: 0; min-width: 0; }
+.onboarding-proficiency label { position: relative; flex: 1; min-width: 0; cursor: pointer; }
+.onboarding-proficiency input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.onboarding-proficiency span { display: block; border: 1px solid #ffffff26; text-align: center; padding: 10px 3px; font-size: 12px; color: #b7c0db; }
+.onboarding-proficiency label:first-of-type span { border-radius: 7px 0 0 7px; }
+.onboarding-proficiency label:last-of-type span { border-radius: 0 7px 7px 0; }
+.onboarding-proficiency input:checked + span { background: #7c6cff26; border-color: #7c6cff; color: #f5f7ff; }
+.onboarding-proficiency input:focus-visible + span { outline: 2px solid #9e91ff; outline-offset: 2px; }
+.onboarding-choice input:disabled + span, .onboarding-choices:disabled { opacity: .5; cursor: default; }
+.direction-selector { min-width: 0; }
+.direction-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 0; border-bottom: 1px solid #ffffff14; }
+.direction-row > span { flex: 1; min-width: 120px; overflow-wrap: anywhere; font-size: 14px; }
+.direction-row label { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+.direction-row input { accent-color: #7c6cff; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .onboarding-scratch { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 14px; color: #e2e7f8; }
 .onboarding-scratch input { accent-color: #7c6cff; width: 18px; height: 18px; }
 .onboarding-help { font-size: 12px; color: #b7c0db; line-height: 1.6; margin: 12px 0 0; }

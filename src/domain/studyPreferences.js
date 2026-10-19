@@ -1,3 +1,4 @@
+import { normalizeDirections } from './learningDirections.js'
 export const selfReportedLevels = ['not_rated', 'beginner', 'comfortable', 'strong']
 export const selfReportOptions = [['not_rated', 'Not rated'], ['beginner', 'Beginner'], ['comfortable', 'Comfortable'], ['strong', 'Strong']]
 export const dailyStudyOptions = [[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 hour'], [90, '1.5 hours'], [120, '2+ hours']]
@@ -7,8 +8,10 @@ export const taskSizes = [['quick', 'Quick 15–25 min'], ['focused', 'Focused 3
 export const preferenceDefinitions = [['dailyStudyMinutes', 'Daily availability', dailyStudyOptions], ['studyPeriod', 'Preferred study period', studyPeriods], ['learningStyle', 'Learning preference', learningStyles], ['taskSize', 'Task size', taskSizes]]
 export const preferenceLabel = (key, value) => preferenceDefinitions.find(item => item[0] === key)?.[2].find(item => item[0] === value)?.[1] ?? (value == null ? 'Not provided' : key === 'dailyStudyMinutes' ? `${value} min` : value)
 export const validPreference = (key, value) => key === 'dailyStudyMinutes' ? Number.isInteger(value) && value > 0 && value <= 1440 : preferenceDefinitions.find(item => item[0] === key)?.[2].some(item => item[0] === value) === true
-export function normalizeOnboarding({ account, goal, skills, studyPreferences, notifications }) {
-  const result = { account: { name: account.name.trim(), email: account.email.trim() }, goal: { direction: (goal.direction === 'Custom' ? goal.customDirection : goal.direction).trim(), description: goal.description.trim() }, skills: skills.map(skill => ({ name: skill.name.trim(), selfReportedLevel: skill.selfReportedLevel })), studyPreferences: Object.fromEntries(preferenceDefinitions.map(([key]) => [key, studyPreferences[key]])), notifications: { email: notifications.email, whatsapp: notifications.whatsapp } }
+export function normalizeOnboarding({ account, goal, directions, skills, startingFromScratch = false, studyPreferences, notifications }) {
+  const selected = normalizeDirections(directions)
+  if (typeof startingFromScratch !== 'boolean' || startingFromScratch && skills.length) throw Error('INVALID_ONBOARDING_PAYLOAD')
+  const result = { account: { name: account.name.trim(), email: account.email.trim() }, directions: selected, startingFromScratch, goal: { direction: selected.find(item => item.isPrimary).name, description: goal.description.trim() }, skills: skills.map(skill => ({ name: skill.name.trim(), selfReportedLevel: skill.selfReportedLevel })), studyPreferences: Object.fromEntries(preferenceDefinitions.map(([key]) => [key, studyPreferences[key]])), notifications: { email: notifications.email, whatsapp: notifications.whatsapp } }
   if (!result.account.name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.account.email) || !result.goal.direction || !result.goal.description || result.skills.some(skill => !skill.name || !selfReportedLevels.includes(skill.selfReportedLevel)) || new Set(result.skills.map(skill => skill.name.toLowerCase())).size !== result.skills.length || preferenceDefinitions.some(([key]) => !validPreference(key, result.studyPreferences[key])) || typeof notifications.email !== 'boolean' || typeof notifications.whatsapp !== 'boolean') throw Error('INVALID_ONBOARDING_PAYLOAD')
   return result
 }
