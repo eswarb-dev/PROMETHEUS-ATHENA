@@ -2,10 +2,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 import { mailConfig, mailFailure } from '../_shared/mail/mailer.ts'
 import { createMailTransport } from '../_shared/mail/transport.ts'
 import { reminderTemplate, type ReminderKind } from '../_shared/reminders/templates.ts'
-import { whatsappProvider } from '../_shared/reminders/whatsapp.ts'
 import { schedulerAuthorized } from '../_shared/reminders/authorization.ts'
 
-type Delivery = { id: string; claimToken: string; channel: 'email'|'whatsapp'; kind: ReminderKind; isTest: boolean; recipientEmail: string; recipientPhone: string; dailyStudyMinutes: number }
+type Delivery = { id: string; claimToken: string; channel: 'email'; kind: ReminderKind; isTest: boolean; recipientEmail: string; dailyStudyMinutes: number }
 Deno.serve(async request => {
   const appUrl = Deno.env.get('ATHENA_APP_URL')!
   const origin = request.headers.get('origin')
@@ -37,15 +36,13 @@ Deno.serve(async request => {
     else await rpc('queue_reminder_test',{p_user_id:owner})
     const claims = await rpc('claim_reminder_deliveries',{p_user_id:owner,p_limit:3}) as Delivery[]
     const transport = createMailTransport(key=>Deno.env.get(key))
-    const whatsapp = whatsappProvider(key=>Deno.env.get(key))
     const deliveries: Array<{channel:string;status:string}>=[]
     try {
       for (const claim of claims) {
         let result: {status:string;code?:string;messageId?:string}
-        if (claim.channel==='email') {
-          try { const sent=await transport.sendTransactionalMail(claim.recipientEmail,reminderTemplate(claim.kind,claim.dailyStudyMinutes,appUrl,claim.isTest)); result={status:'sent',messageId:sent.messageId} }
-          catch(error){result=mailFailure(error)}
-        } else result=await whatsapp.sendTemplateReminder({deliveryId:claim.id,recipientPhone:claim.recipientPhone,template:claim.kind,dailyStudyMinutes:claim.dailyStudyMinutes,appUrl})
+        if (claim.channel!=='email') throw Error('UNSUPPORTED_DELIVERY')
+        try { const sent=await transport.sendTransactionalMail(claim.recipientEmail,reminderTemplate(claim.kind,claim.dailyStudyMinutes,appUrl,claim.isTest)); result={status:'sent',messageId:sent.messageId} }
+        catch(error){result=mailFailure(error)}
         const recorded=await rpc('finish_reminder_delivery',{p_id:claim.id,p_claim_token:claim.claimToken,p_status:result.status,p_error_code:result.code??null,p_provider_message_id:result.messageId??null})
         if (!recorded) throw Error('REMINDER_ACK')
         deliveries.push({channel:claim.channel,status:result.status})

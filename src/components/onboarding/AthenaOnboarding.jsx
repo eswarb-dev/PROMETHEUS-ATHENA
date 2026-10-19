@@ -6,7 +6,7 @@ import './AthenaOnboarding.css'
 import DirectionSelector from './DirectionSelector.jsx'
 import PreferenceFields from './PreferenceFields.jsx'
 import ReminderFields from './ReminderFields.jsx'
-import { reminderOptions, needsWhatsApp, validPhone, maskPhone } from '../../domain/reminderPreferences.js'
+import { formatReminderTime } from '../../domain/reminderTime.js'
 
 const skillOptions = ['Python', 'Java', 'C / C++', 'JavaScript', 'React', 'Node.js', 'SQL', 'Git', 'Machine Learning', 'Deep Learning', 'RAG', 'Cloud', 'UI / UX', 'DSA']
 const studyOptions = preferenceDefinitions.map(([key, label, options]) => [key, key === 'dailyStudyMinutes' ? 'Available time per day' : key === 'taskSize' ? 'Preferred task size' : label, options])
@@ -24,7 +24,7 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
   const [startingFromScratch, setStartingFromScratch] = useState(false)
   const [customSkill, setCustomSkill] = useState('')
   const [studyPreferences, setStudyPreferences] = useState({ dailyStudyMinutes: '', studyPeriod: '', learningStyle: '', taskSize: '' })
-  const [notifications, setNotifications] = useState({ email: null, whatsapp: null })
+  const [notifications, setNotifications] = useState({ studyReminders: false, weeklyReport: false, preferredReminderTime: '', timezone: 'Asia/Kolkata' })
   const [touched, setTouched] = useState({})
   const [shown, setShown] = useState({})
   const [capabilities, setCapabilities] = useState(null)
@@ -44,7 +44,6 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
     })
     return () => { controller.abort(); submission.current?.abort() }
   }, [capabilityAttempt])
-  const reminderPreference = notifications.email == null ? '' : notifications.email && notifications.whatsapp ? 'both' : notifications.email ? 'email' : notifications.whatsapp ? 'whatsapp' : 'none'
   const creationSupported = !!user && !preview && capabilities?.profileCompletion === true
 
   const accountErrors = {
@@ -57,7 +56,7 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
     createdAccount ? !!(account.name.trim() && account.email.trim()) : Object.values(accountErrors).every(error => !error),
     directions.length >= 1 && directions.length <= 3 && directions.filter(item => item.isPrimary).length === 1 && !!goal.description.trim(),
     skills.length > 0 || startingFromScratch,
-    studyOptions.every(([key]) => validPreference(key, studyPreferences[key])) && reminderPreference !== '' && (!needsWhatsApp(reminderPreference) || validPhone(notifications.whatsappNumber)),
+    studyOptions.every(([key]) => validPreference(key, studyPreferences[key])) && !!notifications.timezone.trim(),
   ]
   const canContinue = step === 5 ? valid.every(Boolean) : valid[step - 1]
   const changeStep = next => {
@@ -129,7 +128,7 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
       </Step>
       <Step title="Preferences"><StepHeading title="How should ATHENA work with you?">Choose a rhythm that fits your day.</StepHeading>
         <PreferenceFields value={studyPreferences} onChange={setStudyPreferences} />
-        <ReminderFields value={notifications} onChange={setNotifications} capabilities={capabilities} />
+        <ReminderFields value={notifications} onChange={setNotifications} capabilities={capabilities} email={user?.email ?? account.email} verified={!!user?.email_confirmed_at} />
       </Step>
       <Step title="Review"><StepHeading title="Your ATHENA profile">Review your choices. You can change these later.</StepHeading>
         <dl className="onboarding-review">
@@ -137,8 +136,9 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
           <div><dt>Learning directions</dt><dd>{directions.map(item => `${item.name}${item.isPrimary ? ' (Primary)' : ''}`).join(' · ')}</dd></div><div><dt>Main goal</dt><dd>{goal.description}</dd></div>
           <div><dt>Selected skills · Self-reported</dt><dd>{startingFromScratch ? 'Starting from scratch' : skills.map(skill => `${skill.name} (${skill.selfReportedLevel})`).join(' · ')}</dd></div>
           <div><dt>Daily availability</dt><dd>{preferenceLabel('dailyStudyMinutes', studyPreferences.dailyStudyMinutes)}</dd></div>
-          {needsWhatsApp(reminderPreference) && <div><dt>WhatsApp · Unverified</dt><dd>{maskPhone(notifications.whatsappNumber)}</dd></div>}
-          <div><dt>Study period</dt><dd>{preferenceLabel('studyPeriod', studyPreferences.studyPeriod)}</dd></div><div><dt>Learning style</dt><dd>{preferenceLabel('learningStyle', studyPreferences.learningStyle)}</dd></div><div><dt>Task size</dt><dd>{preferenceLabel('taskSize', studyPreferences.taskSize)}</dd></div><div><dt>Reminders</dt><dd>{reminderOptions.find(([key]) => key === reminderPreference)?.[1]}</dd></div>
+          <div><dt>Primary direction</dt><dd>{directions.find(item=>item.isPrimary)?.name}</dd></div>
+          <div><dt>Study period</dt><dd>{preferenceLabel('studyPeriod', studyPreferences.studyPeriod)}</dd></div><div><dt>Learning approach</dt><dd>{preferenceLabel('learningStyle', studyPreferences.learningStyle)}</dd></div><div><dt>Task size</dt><dd>{preferenceLabel('taskSize', studyPreferences.taskSize)}</dd></div><div><dt>Study reminders</dt><dd>{notifications.studyReminders ? 'Enabled by email' : 'Disabled'}</dd></div>
+          <div><dt>Reminder time</dt><dd>{formatReminderTime(notifications.preferredReminderTime)} · {notifications.timezone}</dd></div><div><dt>Reminder email</dt><dd>{user?.email ?? account.email}</dd></div>
         </dl>{!creationSupported && <p className="onboarding-help" role="status">Profile submission is disabled in this development preview.</p>}{capabilityStatus === 'error' && <button type="button" className="onboarding-secondary" onClick={() => { setCapabilityStatus('loading'); setCapabilityAttempt(value => value + 1) }}>Retry connection</button>}{pending && <p className="onboarding-help" role="status">Submitting your profile…</p>}{submissionError && <p className="onboarding-error" role="alert">{submissionError}</p>}
       </Step>
     </Stepper>

@@ -4,10 +4,9 @@ import { DataError, normalizeError } from '../lib/supabase/errors.js'
 import { validPreference } from '../domain/studyPreferences.js'
 import { sessionIdentity } from '../lib/auth/sessionIdentity.js'
 import { normalizeDirections } from '../domain/learningDirections.js'
-export const notificationKeys = ['studyReminders', 'weeklyReport', 'email', 'whatsapp']
+export { notificationFields as notificationKeys } from '../domain/reminderPreferences.js'
 const mappings = {
   study_preferences: { dailyStudyMinutes: 'daily_study_minutes', studyPeriod: 'study_period', learningStyle: 'learning_style', taskSize: 'task_size' },
-  notification_preferences: { studyReminders: 'study_reminders', weeklyReport: 'weekly_report' },
 }
 async function patch(table, payload, { userId } = {}) {
   if (!supabase) throw new DataError('SUPABASE_NOT_CONFIGURED')
@@ -24,7 +23,7 @@ async function patch(table, payload, { userId } = {}) {
 export const settingsService = {
   async getSettings({ user, ...options } = {}) {
     const data = await rpc('get_settings_snapshot', {}, options)
-    const account = { email: user?.email, createdAt: user?.created_at, authProvider: user?.app_metadata?.provider }
+    const account = { email: user?.email, emailVerified: !!user?.email_confirmed_at, createdAt: user?.created_at, authProvider: user?.app_metadata?.provider }
     return { ...data, account, profile: data.profile ? { ...data.profile, email: user?.email } : null }
   },
   async updateProfile(payload, options) {

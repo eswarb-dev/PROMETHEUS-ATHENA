@@ -8,7 +8,7 @@ import { clearAuthUrlErrors } from '../src/auth/authUrlCleanup.js'
 import { confirmationUrl, recoveryUrl } from '../src/auth/authConfig.js'
 
 const choices = [{ name: 'Python systems', source: 'custom', isPrimary: false }, { name: 'Research / Higher Studies', source: 'preset', isPrimary: true }]
-const payload = { account: { name: 'Owner', email: 'owner@example.invalid' }, goal: { description: 'Learn fundamentals' }, directions: choices, startingFromScratch: false, skills: [{ name: 'Python', selfReportedLevel: 'comfortable', verifiedLevel: 'ignored' }], studyPreferences: { dailyStudyMinutes: 30, studyPeriod: 'evening', learningStyle: 'balanced', taskSize: 'focused' }, notifications: { email: false, whatsapp: false } }
+const payload = { account: { name: 'Owner', email: 'owner@example.invalid' }, goal: { description: 'Learn fundamentals' }, directions: choices, startingFromScratch: false, skills: [{ name: 'Python', selfReportedLevel: 'comfortable', verifiedLevel: 'ignored' }], studyPreferences: { dailyStudyMinutes: 30, studyPeriod: 'evening', learningStyle: 'balanced', taskSize: 'focused' }, notifications: { studyReminders: false, weeklyReport: false } }
 
 test('direction payload preserves explicit primary, limits selections and rejects scratch/skills conflict', () => {
   const clean=normalizeOnboarding(payload)

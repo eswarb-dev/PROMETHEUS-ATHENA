@@ -1,6 +1,13 @@
 import { useId } from 'react'
-import { reminderOptions, reminderChannel, needsWhatsApp, validPhone, reminderHelp } from '../../domain/reminderPreferences.js'
-export default function ReminderFields({ value, onChange, capabilities, disabled = false }) {
-  const id = useId(), channel = reminderChannel(value)
-  return <div className="athena-reminder-fields"><div className="onboarding-field"><label htmlFor={`${id}-channel`}>Reminder preference <small className="reminder-recommended">Both recommended</small></label><select id={`${id}-channel`} value={channel} disabled={disabled} required onChange={event => { const reminderChannel = event.target.value; onChange({ ...value, reminderChannel, email: ['email', 'both'].includes(reminderChannel), whatsapp: needsWhatsApp(reminderChannel) }) }}><option value="" disabled>Choose a reminder channel</option>{reminderOptions.map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select><small>{reminderHelp(channel, capabilities)}</small></div>{needsWhatsApp(channel) && <div className="onboarding-field"><label htmlFor={`${id}-phone`}>WhatsApp number</label><input id={`${id}-phone`} type="tel" inputMode="tel" autoComplete="tel" placeholder="International number, including +country code" value={value.whatsappNumber ?? ''} maxLength={16} disabled={disabled} onChange={event => onChange({ ...value, whatsappNumber: event.target.value.trim() })} required aria-invalid={!!value.whatsappNumber && !validPhone(value.whatsappNumber)} /><small>Use international/E.164 format. This number is private and unverified until the reminder provider verifies it. WhatsApp is for automated reminders only.</small></div>}</div>
+import { personalEmailRecommendation, reminderHelp } from '../../domain/reminderPreferences.js'
+import ReminderTimeField from './ReminderTimeField.jsx'
+export default function ReminderFields({ value, onChange, capabilities, disabled = false, email, verified = false, includeWeekly = false }) {
+  const id = useId()
+  return <fieldset className="athena-reminder-fields" disabled={disabled}><legend className="sr-only">Email reminder preferences</legend>
+    {[['studyReminders','Study reminders'],...(includeWeekly ? [['weeklyReport','Weekly progress report']] : [])].map(([key,label])=><div className="settings-notification" key={key}><label htmlFor={`${id}-${key}`}>{label}</label><input id={`${id}-${key}`} type="checkbox" role="switch" checked={!!value[key]} onChange={event=>onChange({...value,[key]:event.target.checked})} /></div>)}
+    <small>{reminderHelp(capabilities)}</small>
+    <ReminderTimeField value={value.preferredReminderTime} onChange={preferredReminderTime=>onChange({...value,preferredReminderTime})} />
+    <div className="onboarding-field"><label htmlFor={`${id}-timezone`}>Timezone</label><input id={`${id}-timezone`} value={value.timezone??'Asia/Kolkata'} onChange={event=>onChange({...value,timezone:event.target.value})} required /></div>
+    <div className="onboarding-field"><label htmlFor={`${id}-email`}>Reminder email</label><input id={`${id}-email`} type="email" value={email??''} readOnly /><small>{verified ? 'Verified' : 'Email verification is required before reminder delivery.'}</small><small>{personalEmailRecommendation}</small></div>
+  </fieldset>
 }

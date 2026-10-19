@@ -1,5 +1,5 @@
 import { normalizeDirections } from './learningDirections.js'
-import { reminderChannel, needsWhatsApp, validPhone } from './reminderPreferences.js'
+import { splitReminderTime, joinReminderTime } from './reminderTime.js'
 export const selfReportedLevels = ['not_rated', 'beginner', 'comfortable', 'strong']
 export const selfReportOptions = [['not_rated', 'Not rated'], ['beginner', 'Beginner'], ['comfortable', 'Comfortable'], ['strong', 'Strong']]
 export const dailyStudyOptions = [[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 hour'], [90, '1.5 hours'], [120, '2+ hours']]
@@ -11,10 +11,9 @@ export const preferenceLabel = (key, value) => preferenceDefinitions.find(item =
 export const validPreference = (key, value) => key === 'dailyStudyMinutes' ? Number.isInteger(value) && value > 0 && value <= 1440 : preferenceDefinitions.find(item => item[0] === key)?.[2].some(item => item[0] === value) === true
 export function normalizeOnboarding({ account, goal, directions, skills, startingFromScratch = false, studyPreferences, notifications }) {
   const selected = normalizeDirections(directions)
-  const channel = reminderChannel(notifications)
-  if (!['email','whatsapp','both','none'].includes(channel) || needsWhatsApp(channel) && !validPhone(notifications.whatsappNumber)) throw Error('INVALID_REMINDER_PREFERENCES')
+  if (typeof notifications.studyReminders !== 'boolean' || typeof notifications.weeklyReport !== 'boolean') throw Error('INVALID_REMINDER_PREFERENCES')
   if (typeof startingFromScratch !== 'boolean' || startingFromScratch && skills.length) throw Error('INVALID_ONBOARDING_PAYLOAD')
-  const result = { account: { name: account.name.trim(), email: account.email.trim() }, directions: selected, startingFromScratch, goal: { direction: selected.find(item => item.isPrimary).name, description: goal.description.trim() }, skills: skills.map(skill => ({ name: skill.name.trim(), normalizedName: skill.name.trim().toLowerCase(), selfReportedLevel: skill.selfReportedLevel })), studyPreferences: Object.fromEntries(preferenceDefinitions.map(([key]) => [key, studyPreferences[key]])), notifications: { email: notifications.email, whatsapp: notifications.whatsapp, reminderChannel: channel, whatsappNumber: needsWhatsApp(channel) ? notifications.whatsappNumber : null, timezone: notifications.timezone || 'Asia/Kolkata' } }
-  if (!result.account.name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.account.email) || !result.goal.direction || !result.goal.description || result.skills.some(skill => !skill.name || !selfReportedLevels.includes(skill.selfReportedLevel)) || new Set(result.skills.map(skill => skill.name.toLowerCase())).size !== result.skills.length || preferenceDefinitions.some(([key]) => !validPreference(key, result.studyPreferences[key])) || typeof notifications.email !== 'boolean' || typeof notifications.whatsapp !== 'boolean') throw Error('INVALID_ONBOARDING_PAYLOAD')
+  const result = { account: { name: account.name.trim(), email: account.email.trim() }, directions: selected, startingFromScratch, goal: { direction: selected.find(item => item.isPrimary).name, description: goal.description.trim() }, skills: skills.map(skill => ({ name: skill.name.trim(), normalizedName: skill.name.trim().toLowerCase(), selfReportedLevel: skill.selfReportedLevel })), studyPreferences: Object.fromEntries(preferenceDefinitions.map(([key]) => [key, studyPreferences[key]])), notifications: { studyReminders: notifications.studyReminders, weeklyReport: notifications.weeklyReport, preferredReminderTime: joinReminderTime(splitReminderTime(notifications.preferredReminderTime)), timezone: notifications.timezone || 'Asia/Kolkata' } }
+  if (!result.account.name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.account.email) || !result.goal.direction || !result.goal.description || result.skills.some(skill => !skill.name || !selfReportedLevels.includes(skill.selfReportedLevel)) || new Set(result.skills.map(skill => skill.name.toLowerCase())).size !== result.skills.length || preferenceDefinitions.some(([key]) => !validPreference(key, result.studyPreferences[key]))) throw Error('INVALID_ONBOARDING_PAYLOAD')
   return result
 }
