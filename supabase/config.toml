@@ -15,8 +15,8 @@ major_version = 17
 enabled = false
 
 [auth]
-site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173/**", "http://127.0.0.1:5173/**"]
+site_url = "https://prometheus-athena.eswarbalu28.workers.dev"
+additional_redirect_urls = ["https://prometheus-athena.eswarbalu28.workers.dev/", "https://prometheus-athena.eswarbalu28.workers.dev/**", "http://localhost:5173/**", "http://127.0.0.1:5173/**"]
 minimum_password_length = 8
 
 [auth.email]
