@@ -1,7 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
-// @deno-types="npm:@types/nodemailer@7.0.11"
-import nodemailer from 'npm:nodemailer@10.1.2'
 import { mailConfig, mailFailure } from '../_shared/mail/mailer.ts'
+import { createMailTransport } from '../_shared/mail/transport.ts'
 import { welcomeTemplate } from '../_shared/mail/templates.ts'
 import type { WelcomeClaim } from '../_shared/mail/types.ts'
 import { validWelcomeBody } from '../_shared/mail/authorization.ts'
@@ -25,17 +24,17 @@ Deno.serve(async request => {
     if (!user.email_confirmed_at) return respond(403,'email_unverified')
     const body = await request.text()
     if (!validWelcomeBody(body)) return respond(400,'invalid_request')
-    const config = mailConfig(key => Deno.env.get(key))
+    mailConfig(key => Deno.env.get(key))
     const template = welcomeTemplate('',appUrl)
     if (!template) return respond(503,'mail_unavailable')
     const { data, error } = await admin.rpc('claim_welcome_mail',{ p_user_id: user.id })
     if (error) return respond(503,'mail_unavailable')
     if (!data) return respond(200,'no_delivery_due')
     const claim = data as WelcomeClaim
-    const transport = nodemailer.createTransport(config)
+    const transport = createMailTransport(key => Deno.env.get(key))
     let result: { status: string; code?: string; messageId?: string }
     try {
-      const delivery = await transport.sendMail({ from: config.from, to: claim.email, ...welcomeTemplate(claim.name,appUrl) })
+      const delivery = await transport.sendTransactionalMail(claim.email, welcomeTemplate(claim.name,appUrl))
       result = { status: 'sent', messageId: delivery.messageId }
     } catch (error) {
       const failure = mailFailure(error)

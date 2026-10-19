@@ -36,6 +36,10 @@ content_path = "./supabase/templates/recovery.html"
 # The handler validates the bearer token with Auth getUser before any mail operation.
 verify_jwt = false
 
+[functions.dispatch-reminders]
+# Scheduler secret or verified Auth user; authenticated users can only request their own rate-limited test.
+verify_jwt = false
+
 [auth.email.notification.password_changed]
 enabled = true
 subject = "Your ATHENA password changed"

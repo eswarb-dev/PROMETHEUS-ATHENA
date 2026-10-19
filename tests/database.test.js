@@ -27,7 +27,7 @@ test('migrations, RLS, ownership, snapshots and server-clock mutations in isolat
     const directory = new URL('../supabase/migrations/', import.meta.url)
     for (const file of (await readdir(directory)).filter(name => name.endsWith('.sql')).sort()) await db.exec(await readFile(new URL(file, directory), 'utf8'))
     const tables = (await db.query("select tablename,rowsecurity from pg_tables where schemaname='public' order by tablename")).rows
-    assert.equal(tables.length, 14)
+    assert.equal(tables.length, 17)
     assert.ok(tables.every(table => table.rowsecurity))
     await db.exec(`insert into auth.users(id) values ('${a}'),('${b}');
       update public.profiles set name='Owner A' where id='${a}'; update public.profiles set name='Owner B' where id='${b}';
@@ -96,7 +96,7 @@ test('migrations, RLS, ownership, snapshots and server-clock mutations in isolat
     await denied(`select public.start_focus_session('${task}')`)
     await db.exec("select set_config('request.jwt.claim.sub','',false)")
     assert.equal(await scalar('select count(*) from public.profiles'), 0)
-    assert.equal((await scalar('select public.get_home_snapshot()')).currentRoadmap, null)
-    assert.deepEqual((await scalar('select public.get_athena_snapshot()')).messages, [])
+    await denied('select public.get_home_snapshot()')
+    await denied('select public.get_athena_snapshot()')
   } finally { await db.close() }
 })
