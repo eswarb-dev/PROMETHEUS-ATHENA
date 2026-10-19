@@ -37,6 +37,10 @@ Deno.test('OAuth uses unpredictable state, PKCE, fixed callback and only readonl
   check(!authorizationUrl(config,a.state,a.challenge,false).includes('prompt='))
   check(url.searchParams.get('login_hint')===SYSTEM_MAILBOX)
   const unauthorized=await createStartHandler(dependencies(store))(new Request('https://fixture.invalid/start',{method:'POST'}));check(unauthorized.status===401)
+  const empty=new Request('https://fixture.invalid/start',{method:'POST',body:'',headers:{'x-athena-gmail-bootstrap':bootstrap}})
+  check((await createStartHandler(dependencies(store))(empty)).status===200)
+  const nonempty=new Request('https://fixture.invalid/start',{method:'POST',body:'unexpected',headers:{'x-athena-gmail-bootstrap':bootstrap}})
+  check((await createStartHandler(dependencies(store))(nonempty)).status===400)
 })
 Deno.test('callback consumes state once, rejects expiry and never returns credentials',async()=>{
   const store=new MemoryStore(),url=await started(store),callback=createCallbackHandler(dependencies(store,googleFixture()))

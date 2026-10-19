@@ -12,7 +12,10 @@ export function createStartHandler({get,store}:Dependencies){return async(reques
     if(request.method!=='POST')throw new GmailError('GMAIL_METHOD')
     if(request.headers.has('origin'))throw new GmailError('GMAIL_UNAUTHORIZED')
     if(!await bootstrapAuthorized(request.headers.get('x-athena-gmail-bootstrap'),get('GMAIL_OAUTH_BOOTSTRAP_SECRET')))throw new GmailError('GMAIL_UNAUTHORIZED')
-    if(request.body)throw new GmailError('GMAIL_MESSAGE')
+    // Some HTTP runtimes represent an empty POST as an empty stream.
+    const reader=request.body?.getReader()
+    try{while(reader){const {done,value}=await reader.read();if(done)break;if(value.length)throw new GmailError('GMAIL_MESSAGE')}}
+    finally{await reader?.cancel();reader?.releaseLock()}
     const config=oauthConfig(get),storage=store(),state=await createOAuthState()
     const needsConsent=!await storage.hasRefreshToken()
     if(!await storage.createState(state.hash,state.verifier))throw new GmailError('GMAIL_STATE')
