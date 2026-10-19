@@ -9,7 +9,7 @@ import { validWelcomeBody } from '../_shared/mail/authorization.ts'
 Deno.serve(async request => {
   const appUrl = Deno.env.get('ATHENA_APP_URL') ?? 'http://localhost:5173'
   const origin = request.headers.get('origin')
-  const allowed = [new URL(appUrl).origin, 'http://127.0.0.1:5173']
+  const allowed = [new URL(appUrl).origin, 'http://localhost:5173', 'http://127.0.0.1:5173']
   const headers: Record<string,string> = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Vary': 'Origin' }
   if (origin && allowed.includes(origin)) headers['Access-Control-Allow-Origin'] = origin
   const respond = (status: number, state: string) => new Response(JSON.stringify({ status: state }), { status, headers })

@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase/client.js'
 import { AuthFlowError } from '../auth/authErrors.js'
-import { otpLength, recoveryUrl } from '../auth/authConfig.js'
+import { otpLength, recoveryUrl, confirmationUrl } from '../auth/authConfig.js'
 
 export function createAuthService(client = supabase) {
   const auth = () => { if (!client) throw new AuthFlowError('SUPABASE_NOT_CONFIGURED'); return client.auth }
@@ -12,7 +12,7 @@ export function createAuthService(client = supabase) {
   return {
     getAuthCapabilities: () => ({ configured: !!client, otpLength }),
     signIn: async (email, password) => confirmed(await unwrap(auth().signInWithPassword({ email: email.trim(), password }))),
-    signUp: ({ name, email, password }) => unwrap(auth().signUp({ email: email.trim(), password, options: { data: { name: name.trim() } } })),
+    signUp: ({ name, email, password }) => unwrap(auth().signUp({ email: email.trim(), password, options: { data: { name: name.trim() }, ...(globalThis.location?.origin ? { emailRedirectTo: confirmationUrl() } : {}) } })),
     verifySignupOtp: async ({ email, token }) => {
       if (!new RegExp(`^\\d{${otpLength}}$`).test(token)) throw new AuthFlowError('otp_expired')
       return confirmed(await unwrap(auth().verifyOtp({ email: email.trim(), token, type: 'email' })))

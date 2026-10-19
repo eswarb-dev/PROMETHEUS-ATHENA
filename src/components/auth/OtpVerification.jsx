@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { otpLength, maskEmail } from '../../auth/authConfig.js'
 import { authService } from '../../services/authService.js'
+import { useSession } from '../../lib/auth/sessionContext.js'
 import useAuthAction from '../../auth/useAuthAction.js'
 import AuthError from './AuthError.jsx'
 import AuthButton from './AuthButton.jsx'
@@ -11,6 +12,14 @@ export default function OtpVerification({ email, sent, navigate }) {
   const [notice, setNotice] = useState('')
   const cells = useRef([])
   const action = useAuthAction()
+  const { refreshSession } = useSession()
+  useEffect(() => {
+    let timer
+    const check = () => { if (document.visibilityState !== 'visible') return; clearTimeout(timer); timer = setTimeout(() => { void refreshSession() }, 100) }
+    window.addEventListener('focus', check)
+    document.addEventListener('visibilitychange', check)
+    return () => { clearTimeout(timer); window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check) }
+  }, [refreshSession])
   const remaining = Math.max(0, Math.ceil((until - now) / 1000))
   useEffect(() => { if (!until) return; const timer = setInterval(() => { const current = Date.now(); setNow(current); if (current >= until) clearInterval(timer) }, 1000); return () => clearInterval(timer) }, [until])
   const input = (index, value) => {
@@ -20,7 +29,7 @@ export default function OtpVerification({ email, sent, navigate }) {
   }
   return <form className="auth-form" onSubmit={event => { event.preventDefault(); if (digits.some(digit => !digit)) return; void action.run(async () => { try { await authService.verifySignupOtp({ email, token: digits.join('') }) } finally { setDigits(Array(otpLength).fill('')) } }) }}>
     <p className="auth-help">Check the email sent to <strong>{maskEmail(email)}</strong>.</p>
-    <p className="auth-help">Enter the {otpLength}-digit verification code from your ATHENA email.</p>
+    <p className="auth-help">Enter the verification code from your email, or use the confirmation link in the message.</p>
     <fieldset className="auth-otp" disabled={action.pending}><legend>Verification code</legend><div style={{ '--otp-length': otpLength }}>{digits.map((digit, index) => <input id={`auth-otp-${index + 1}`} key={index} ref={node => { cells.current[index] = node }} aria-label={`Digit ${index + 1} of ${otpLength}`} aria-describedby="auth-error" inputMode="numeric" type="text" autoComplete={index === 0 ? 'one-time-code' : 'off'} value={digit} onChange={event => input(index, event.target.value)} onPaste={event => { event.preventDefault(); input(index, event.clipboardData.getData('text')) }} onKeyDown={event => { if (event.key === 'Backspace' && !digit && index) cells.current[index - 1]?.focus(); if (event.key === 'ArrowLeft' && index) cells.current[index - 1]?.focus(); if (event.key === 'ArrowRight' && index + 1 < otpLength) cells.current[index + 1]?.focus() }} />)}</div></fieldset>
     <AuthError>{action.error}</AuthError><p className="auth-notice" aria-live="polite">{notice}</p>
     <AuthButton pending={action.pending} disabled={digits.some(digit => !digit)}>{action.pending ? 'Verifying…' : 'Verify'}</AuthButton>
