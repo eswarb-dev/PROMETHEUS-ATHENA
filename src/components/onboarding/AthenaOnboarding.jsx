@@ -4,19 +4,12 @@ import { preferenceDefinitions, preferenceLabel, selfReportOptions, validPrefere
 import { onboardingService } from '../../services/onboardingService.js'
 import './AthenaOnboarding.css'
 import DirectionSelector from './DirectionSelector.jsx'
+import PreferenceFields from './PreferenceFields.jsx'
+import ReminderFields from './ReminderFields.jsx'
+import { reminderOptions, needsWhatsApp, validPhone, maskPhone } from '../../domain/reminderPreferences.js'
 
 const skillOptions = ['Python', 'Java', 'C / C++', 'JavaScript', 'React', 'Node.js', 'SQL', 'Git', 'Machine Learning', 'Deep Learning', 'RAG', 'Cloud', 'UI / UX', 'DSA']
 const studyOptions = preferenceDefinitions.map(([key, label, options]) => [key, key === 'dailyStudyMinutes' ? 'Available time per day' : key === 'taskSize' ? 'Preferred task size' : label, options])
-const reminderOptions = [['email', 'Email'], ['whatsapp', 'WhatsApp'], ['both', 'Both'], ['none', 'None']]
-
-function Choices({ legend, name, options, value, onChange, disabledOptions = [] }) {
-  return <fieldset className="onboarding-choices"><legend>{legend}</legend><div className="onboarding-choice-grid">
-    {options.map(option => {
-      const [key, label] = Array.isArray(option) ? option : [option, option]
-      return <label key={key} className="onboarding-choice"><input type="radio" name={name} value={key} checked={value === key} disabled={disabledOptions.includes(key)} onChange={() => onChange(key)} /><span>{label}</span></label>
-    })}
-  </div></fieldset>
-}
 
 function StepHeading({ title, children }) {
   return <div className="onboarding-step-heading"><h2>{title}</h2>{children && <p>{children}</p>}</div>
@@ -64,7 +57,7 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
     createdAccount ? !!(account.name.trim() && account.email.trim()) : Object.values(accountErrors).every(error => !error),
     directions.length >= 1 && directions.length <= 3 && directions.filter(item => item.isPrimary).length === 1 && !!goal.description.trim(),
     skills.length > 0 || startingFromScratch,
-    studyOptions.every(([key]) => validPreference(key, studyPreferences[key])) && reminderPreference !== '' && (capabilityStatus !== 'loaded' || (!notifications.email || capabilities.emailNotifications) && (!notifications.whatsapp || capabilities.whatsappNotifications)),
+    studyOptions.every(([key]) => validPreference(key, studyPreferences[key])) && reminderPreference !== '' && (!needsWhatsApp(reminderPreference) || validPhone(notifications.whatsappNumber)),
   ]
   const canContinue = step === 5 ? valid.every(Boolean) : valid[step - 1]
   const changeStep = next => {
@@ -89,7 +82,6 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
     setPending(true); setSubmissionError('')
     try {
       const payload = normalizeOnboarding({ account, goal, directions, skills, startingFromScratch, studyPreferences, notifications })
-      if (notifications.email && !capabilities.emailNotifications || notifications.whatsapp && !capabilities.whatsappNotifications) throw Error('UNSUPPORTED_NOTIFICATIONS')
       await onboardingService.completeOnboarding(payload, { enabled: true, signal: controller.signal })
       if (!controller.signal.aborted) { if (onComplete) await onComplete(); else setStep(6) }
     } catch {
@@ -128,17 +120,16 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
         <div className="onboarding-field"><label htmlFor="main-goal">What is your current main goal?</label><textarea id="main-goal" placeholder="Become job-ready in applied AI" value={goal.description} onChange={event => setGoal(current => ({ ...current, description: event.target.value }))} required /></div>
         {!valid[1] && <p className="onboarding-help">Choose 1–3 directions, mark one primary and describe your main goal to continue.</p>}
       </Step>
-      <Step title="Skills"><StepHeading title="What do you already know?">Don't worry about being exact. ATHENA can verify knowledge later. These levels are self-reported, not verified.</StepHeading>
+      <Step title="Skills"><StepHeading title="What do you already know?">These levels are self-reported. Knowledge verification stays separate.</StepHeading>
         <fieldset className="onboarding-choices" disabled={startingFromScratch}><legend>Select your skills</legend><div className="onboarding-choice-grid">{skillOptions.map(name => <label className="onboarding-choice" key={name}><input type="checkbox" checked={skills.some(skill => skill.name === name)} onChange={() => toggleSkill(name)} /><span>{name}</span></label>)}</div></fieldset>
         <div className="onboarding-custom-skill"><div className="onboarding-field"><label htmlFor="custom-skill">Custom skill</label><input id="custom-skill" value={customSkill} disabled={startingFromScratch} maxLength={80} onChange={event => setCustomSkill(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addSkill() } }} /></div><button type="button" className="onboarding-secondary" disabled={startingFromScratch || !customSkill.trim()} onClick={addSkill}>Add skill</button></div>
-        {!startingFromScratch && <section className="onboarding-selected-skills" aria-labelledby="selected-skills-heading"><h3 id="selected-skills-heading">Selected skills ({skills.length})</h3><div className="onboarding-skill-levels">{skills.map(skill => <div className="onboarding-skill-editor" key={skill.name}><div className="onboarding-skill-heading"><strong>{skill.name}</strong><button type="button" className="onboarding-remove" aria-label={`Remove skill ${skill.name}`} onClick={() => toggleSkill(skill.name)}>Remove</button></div><fieldset className="onboarding-proficiency"><legend className="sr-only">{skill.name}: self-reported level</legend>{selfReportOptions.filter(([key]) => key !== 'not_rated').map(([key, label]) => <label key={key}><input type="radio" name={`skill-${skill.name}`} checked={skill.selfReportedLevel === key} onChange={() => setSkills(current => current.map(item => item.name === skill.name ? { ...item, selfReportedLevel: key } : item))} /><span>{label}</span></label>)}</fieldset></div>)}</div></section>}
+        {!startingFromScratch && <section className="onboarding-selected-skills" aria-labelledby="selected-skills-heading"><h3 id="selected-skills-heading">Selected skills <span>{skills.length} selected</span></h3><div className="onboarding-skill-levels">{skills.map(skill => <div className="onboarding-skill-editor" key={skill.name}><div className="onboarding-skill-heading"><strong>{skill.name}</strong><button type="button" className="onboarding-remove" aria-label={`Remove skill ${skill.name}`} onClick={() => toggleSkill(skill.name)}>×</button></div><fieldset className="onboarding-proficiency"><legend className="sr-only">{skill.name}: self-reported level</legend>{selfReportOptions.filter(([key]) => key !== 'not_rated').map(([key, label]) => <label key={key}><input type="radio" name={`skill-${skill.name}`} checked={skill.selfReportedLevel === key} onChange={() => setSkills(current => current.map(item => item.name === skill.name ? { ...item, selfReportedLevel: key } : item))} /><span>{label}</span></label>)}</fieldset></div>)}</div></section>}
         <label className="onboarding-scratch"><input type="checkbox" checked={startingFromScratch} onChange={event => { setStartingFromScratch(event.target.checked); if (event.target.checked) { setSkills([]); setCustomSkill('') } }} /><span>I'm starting from scratch</span></label>
         {!valid[2] && <p className="onboarding-help">Select at least one skill, or choose to start from scratch.</p>}
       </Step>
-      <Step title="Study Style"><StepHeading title="How do you want ATHENA to work with you?">Choose a rhythm that fits your day.</StepHeading>
-        {studyOptions.map(([key, legend, options]) => <Choices key={key} legend={legend} name={key} options={options} value={studyPreferences[key]} onChange={value => setStudyPreferences(current => ({ ...current, [key]: value }))} />)}
-        <Choices legend="Reminder preference" name="reminderPreference" options={reminderOptions} value={reminderPreference} disabledOptions={capabilityStatus === 'loaded' ? reminderOptions.filter(([key]) => (key === 'email' || key === 'both') && !capabilities.emailNotifications || (key === 'whatsapp' || key === 'both') && !capabilities.whatsappNotifications).map(([key]) => key) : []} onChange={value => setNotifications({ email: value === 'email' || value === 'both', whatsapp: value === 'whatsapp' || value === 'both' })} />
-        <p className="onboarding-help">Reminders are a preference only. No email or WhatsApp messages will be sent.</p>
+      <Step title="Preferences"><StepHeading title="How should ATHENA work with you?">Choose a rhythm that fits your day.</StepHeading>
+        <PreferenceFields value={studyPreferences} onChange={setStudyPreferences} />
+        <ReminderFields value={notifications} onChange={setNotifications} capabilities={capabilities} />
       </Step>
       <Step title="Review"><StepHeading title="Your ATHENA profile">Review your choices. You can change these later.</StepHeading>
         <dl className="onboarding-review">
@@ -146,6 +137,7 @@ export default function AthenaOnboarding({ user, profile, preview = false, onCom
           <div><dt>Learning directions</dt><dd>{directions.map(item => `${item.name}${item.isPrimary ? ' (Primary)' : ''}`).join(' · ')}</dd></div><div><dt>Main goal</dt><dd>{goal.description}</dd></div>
           <div><dt>Selected skills · Self-reported</dt><dd>{startingFromScratch ? 'Starting from scratch' : skills.map(skill => `${skill.name} (${skill.selfReportedLevel})`).join(' · ')}</dd></div>
           <div><dt>Daily availability</dt><dd>{preferenceLabel('dailyStudyMinutes', studyPreferences.dailyStudyMinutes)}</dd></div>
+          {needsWhatsApp(reminderPreference) && <div><dt>WhatsApp · Unverified</dt><dd>{maskPhone(notifications.whatsappNumber)}</dd></div>}
           <div><dt>Study period</dt><dd>{preferenceLabel('studyPeriod', studyPreferences.studyPeriod)}</dd></div><div><dt>Learning style</dt><dd>{preferenceLabel('learningStyle', studyPreferences.learningStyle)}</dd></div><div><dt>Task size</dt><dd>{preferenceLabel('taskSize', studyPreferences.taskSize)}</dd></div><div><dt>Reminders</dt><dd>{reminderOptions.find(([key]) => key === reminderPreference)?.[1]}</dd></div>
         </dl>{!creationSupported && <p className="onboarding-help" role="status">Profile submission is disabled in this development preview.</p>}{capabilityStatus === 'error' && <button type="button" className="onboarding-secondary" onClick={() => { setCapabilityStatus('loading'); setCapabilityAttempt(value => value + 1) }}>Retry connection</button>}{pending && <p className="onboarding-help" role="status">Submitting your profile…</p>}{submissionError && <p className="onboarding-error" role="alert">{submissionError}</p>}
       </Step>

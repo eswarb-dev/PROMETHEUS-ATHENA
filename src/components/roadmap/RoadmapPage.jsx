@@ -29,7 +29,7 @@ export default function RoadmapPage() {
     {status === 'auth-required' && <DataAccessState />}
     {['empty', 'unavailable', 'error'].includes(status) && <RoadmapEmptyState status={status} onRetry={retry} />}
     {status === 'loaded' && <>
-      <AnimatedContent {...reveal}><section className="roadmap-summary" aria-label="Roadmap overview"><div><h2>{data.roadmap.title}</h2>{data.roadmap.goal && <p>{data.roadmap.goal}</p>}</div><div className="roadmap-summary-metrics">
+      <AnimatedContent {...reveal}><section className="roadmap-summary" aria-label="Roadmap overview"><div><h2>{data.roadmap.title}</h2>{data.roadmap.goal && <p>{data.roadmap.goal}</p>}{data.pacing&&<p>{data.pacing.dailyStudyMinutes} min/day · {data.pacing.taskSize} tasks{data.pacing.estimatedStudyDays!=null?` · about ${data.pacing.estimatedStudyDays} study days at your pace`:''}</p>}</div><div className="roadmap-summary-metrics">
         {data.roadmap.progressPercent != null && <div><strong>{data.roadmap.progressPercent}%</strong><span>Completion</span></div>}
         <div><strong>{data.topics.filter(topic => topic.status === 'completed').length} / {data.topics.length}</strong><span>Topics completed</span></div>
         {data.roadmap.estimatedRemainingMinutes != null && <div><strong>{data.roadmap.estimatedRemainingMinutes} min</strong><span>Remaining estimate</span></div>}

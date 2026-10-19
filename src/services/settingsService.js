@@ -35,5 +35,11 @@ export const settingsService = {
     return result
   },
   updateStudyPreferences: (payload, options) => patch('study_preferences', payload, options),
-  updateNotificationPreferences: (payload, options) => patch('notification_preferences', payload, options),
+  updateNotificationPreferences: (payload, options) => rpc('save_notification_preferences', { p_patch: payload }, options),
+  async testReminder() {
+    if (!supabase) throw new DataError('SUPABASE_NOT_CONFIGURED')
+    const {data,error}=await supabase.functions.invoke('dispatch-reminders',{body:{action:'test'}})
+    if (error) throw new DataError('QUERY_ERROR')
+    return data
+  },
 }

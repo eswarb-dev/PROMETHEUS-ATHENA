@@ -32,6 +32,7 @@ export default function TodayPage() {
     <header className="today-page-header"><p>PROMETHEUS // ATHENA</p><h1>Today</h1><p>Your focused study plan for today.</p>
       {plan?.date && <small>{new Intl.DateTimeFormat('en-IN', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${plan.date}T12:00:00Z`))}{plan.timezone ? ` · ${plan.timezone}` : ''}</small>}
     </header>
+    {plan?.learningContext && <section className="today-state"><p>{plan.dailyBudgetMinutes} minutes available today · {plan.learningContext.studyPreferences.taskSize} tasks</p>{plan.overBudgetMinutes>0&&<p>Existing tasks exceed your budget by {plan.overBudgetMinutes} minutes. Overflow tasks are marked optional.</p>}<button type="button" className="today-retry" disabled={today.planPending} onClick={today.planToday}>{today.planPending?'Planning…':'Plan today from my roadmap'}</button>{today.planError&&<p role="alert">{today.planError}</p>}</section>}
     {today.status === 'loading' && <TodaySkeleton />}
     {today.status === 'auth-required' && <DataAccessState />}
     {['unavailable', 'empty', 'error'].includes(today.status) && <TodayEmptyState status={today.status} onRetry={retry} />}
